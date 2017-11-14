@@ -35,7 +35,7 @@ var shader = new GL.Shader('\
   void main() {\
     vec3 origin = eye, ray = initialRay, color = vec3(0.0), mask = vec3(1.0);\
     vec3 sphereCenter = vec3(0.0, 0.0, 0.0);\
-    float sphereRadius = 1.5;\
+    float sphereRadius = 3.0;\
     \
     for (int bounce = 0; bounce < 2; bounce++) {\
       /* Find the closest intersection with the scene */\

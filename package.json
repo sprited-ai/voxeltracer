@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "start": "serve"
+    "start": "rollup -c -w & serve && fg; echo 0"
   },
   "repository": {
     "type": "git",
