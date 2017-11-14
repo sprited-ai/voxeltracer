@@ -2,9 +2,11 @@
   "name": "voxelviewer",
   "version": "1.0.0",
   "description": "View voxels online",
-  "main": "src/app.js",
+  "main": "src/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "start": "serve"
   },
   "repository": {
     "type": "git",
@@ -28,7 +30,15 @@
     "url": "https://github.com/kndlt/voxelviewer/issues"
   },
   "homepage": "https://github.com/kndlt/voxelviewer#readme",
+  "dependencies": {
+    "date-fns": "^1.28.5",
+    "serve": "^6.0.2"
+  },
   "devDependencies": {
-    "eslint": "^4.11.0"
+    "eslint": "^4.11.0",
+    "rollup": "^0.46.0",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^3.0.0",
+    "rollup-plugin-uglify": "^2.0.1"
   }
 }
