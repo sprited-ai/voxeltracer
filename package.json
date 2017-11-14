@@ -1,0 +1,34 @@
+{
+  "name": "voxelviewer",
+  "version": "1.0.0",
+  "description": "View voxels online",
+  "main": "src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kndlt/voxelviewer.git"
+  },
+  "keywords": [
+    "voxel",
+    "magicavoxel",
+    "webgl",
+    "import",
+    "vox",
+    "export",
+    "game",
+    "asset",
+    "viewer",
+    "fast"
+  ],
+  "author": "kndlt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kndlt/voxelviewer/issues"
+  },
+  "homepage": "https://github.com/kndlt/voxelviewer#readme",
+  "devDependencies": {
+    "eslint": "^4.11.0"
+  }
+}
