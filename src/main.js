@@ -21,7 +21,6 @@ var shader = new GL.Shader(`
   uniform vec3 ray01;
   uniform vec3 ray11;
   varying vec3 initialRay;
-
   void main() {
     vec2 t = gl_Vertex.xy * 0.5 + 0.5;
     initialRay = mix(mix(ray00, ray10, t.x), mix(ray01, ray11, t.x), t.y);
@@ -44,7 +43,7 @@ var shader = new GL.Shader(`
       vec3 hit = origin + ray * planeT;
       if (planeT < 0.0 || abs(hit.x) > 40.0 || abs(hit.z) > 40.0) planeT = INFINITY;
       float t = planeT;
-      if(tRoom.x < tRoom.y) t = tRoom.y;
+      if(tRoom.x < tRoom.y && tRoom.x < t) t = tRoom.x;
 
       /* The background is white */
       if (t == INFINITY) {

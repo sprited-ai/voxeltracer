@@ -1,5 +1,9 @@
 # voxelviewer
 
+## Demo
+
+https://kndlt.github.com/voxelviewer
+
 ## Getting Started
 
 1. Install [Rollup](https://rollupjs.org/), then run following command.
