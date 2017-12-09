@@ -1,152 +1,225 @@
-// compute the near and far intersections of the cube (stored in the x and y components) using the slab method
-// no intersection means vec.x > vec.y (really tNear > tFar)
-var epsilon = '0.0001';
-
 /**
- * Cube
+ * Voxel Viewer
+ * @author kndlt
  */
-var intersectCubeSource =`
-vec2 intersectCube(vec3 origin, vec3 ray, vec3 cubeMin, vec3 cubeMax) {
-  vec3 tMin = (cubeMin - origin) / ray;
-  vec3 tMax = (cubeMax - origin) / ray;
-  vec3 t1 = min(tMin, tMax);
-  vec3 t2 = max(tMin, tMax);
-  float tNear = max(max(t1.x, t1.y), t1.z);
-  float tFar = min(min(t2.x, t2.y), t2.z);
-  return vec2(tNear, tFar);
-}
-`;
-
-/**
- * Cube normal
- */
-var normalForCubeSource =`
-vec3 normalForCube(vec3 hit, vec3 cubeMin, vec3 cubeMax)
-{
-  if (hit.x < cubeMin.x + ${epsilon}) return vec3(-1.0, 0.0, 0.0);
-  else if (hit.x > cubeMax.x - ${epsilon}) return vec3(1.0, 0.0, 0.0);
-  else if (hit.y < cubeMin.y + ${epsilon}) return vec3(0.0, -1.0, 0.0);
-  else if (hit.y > cubeMax.y - ${epsilon}) return vec3(0.0, 1.0, 0.0);
-  else if (hit.z < cubeMin.z + ${epsilon}) return vec3(0.0, 0.0, -1.0);
-  else return vec3(0.0, 0.0, 1.0);
-}
-`;
-
-var angleX = 30;
-var angleY = 10;
-var gl = GL.create();
-var mesh = GL.Mesh.plane();
-var shader = new GL.Shader(`
-  uniform vec3 ray00;
-  uniform vec3 ray10;
-  uniform vec3 ray01;
-  uniform vec3 ray11;
-  varying vec3 initialRay;
-  void main() {
-    vec2 t = gl_Vertex.xy * 0.5 + 0.5;
-    initialRay = mix(mix(ray00, ray10, t.x), mix(ray01, ray11, t.x), t.y);
-    gl_Position = gl_Vertex;
+function main() {
+  var angleX = 30;
+  var angleY = 10;
+  var gl = GL.create({ version: 2 });
+  if( gl.webgl_version != 2 || !gl )
+  {
+    alert("WebGL 2.0 not supported by your browser");
+    return;
   }
-`, `
-  ${intersectCubeSource}
-  ${normalForCubeSource}
-  const float INFINITY = 1.0e9;
-  uniform vec3 eye;
-  varying vec3 initialRay;
-  vec3 containerMin = vec3(-1, 0, -1);
-  vec3 containerMax = vec3(1, 2, 1);
-  vec3 toLight = vec3(-0.1, 1, 0.5);
-  void main() {
-    vec3 origin = eye, ray = initialRay, color = vec3(0.0), mask = vec3(1.0);
 
-    // Level 3 shaded cube
-    vec3 boundMin = containerMin, boundMax = containerMax;
-    vec3 tMin = (boundMin - origin) / ray;
-    vec3 tMax = (boundMax - origin) / ray;
-    vec3 dt = tMax - tMin;
-    vec3 t1 = min(tMin, tMax);
-    vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
-
-    // Did intersect.
-    if (tNear < tFar) {
-      float t = tNear;
-      vec3 hit = origin + ray * t;
-      vec3 normal = normalForCube(hit, boundMin, boundMax);
-
-      float diffuse = max(0.0, dot(normalize(toLight), normal));
-      color = vec3(diffuse);
+  var voxelData = (function () {
+    var data = new Uint8Array( 2*2*2*4 );
+    for(var i = 0; i < data.length; ++i) {
+      data[i] = Math.random() * 255;
     }
+    return data;
+  })();
+  var texture = new GL.Texture(2, 2, { depth: 2, texture_type: GL.TEXTURE_3D, format: gl.RGBA, magFilter: gl.NEAREST, pixel_data: voxelData } );
 
-    // // If the ray.x > 0 && cubeMin.x > origin.x => then test bound and quarter.
-    // //    Look at which quarter it hits and test if the quarter is empty or not.
-    // //    If the quarter is empty, that axis plane
-    // vec2 tRoom = intersectCube(origin, ray, roomCubeMin, roomCubeMax);
-    //
-    // for (int bounce = 0; bounce < 2; bounce++) {
-    //   /* Find the closest intersection with the scene */
-    //   float planeT = -origin.y / ray.y;
-    //   vec3 hit = origin + ray * planeT;
-    //   if (planeT < 0.0 || abs(hit.x) > 40.0 || abs(hit.z) > 40.0) planeT = INFINITY;
-    //   float t = planeT;
-    //   if (tRoom.x < tRoom.y && tRoom.x < t) t = tRoom.x;
-    //   hit = origin + ray * t;
-    //   // if hit position is within left side, then query left.
-    //   // if hit position is within right side, then query right.
-    //
-    //
-    //   /* The background is white */
-    //   if (t == INFINITY) {
-    //     color += mask;
-    //     break;
-    //   }
-    //
-    //   /* Calculate the intersection */
-    //   hit = origin + ray * t;
-    //   if (t == planeT) {
-    //     /* Look up the checkerboard color */
-    //     vec3 c = fract(hit * 0.5) - 0.5;
-    //     float checkerboard = c.x * c.z > 0.0 ? 1.0 : 0.0;
-    //     color += vec3(0.7, 0.7, 0.7) * mask;
-    //     break;
-    //   }
-    // }
+  var mesh = GL.Mesh.plane();
+  var shader = new GL.Shader(`#version 300 es
+    precision highp float;
+    in vec3 a_vertex;
+    in vec3 ray00;
+    in vec3 ray10;
+    in vec3 ray01;
+    in vec3 ray11;
+    out vec3 initialRay;
+    void main() {
+      vec2 t = a_vertex.xy * 0.5 + 0.5;
+      initialRay = mix(mix(ray00, ray10, t.x), mix(ray01, ray11, t.x), t.y);
+      gl_Position = vec4(a_vertex, 1.0);
+    }
+  `, `#version 300 es
+    precision highp float;
+    precision highp sampler3D;
+    uniform sampler3D u_texture;
+    const float INFINITY = 1.0e9;
+    const int ITERATION_LIMIT = 3 * 128;
+    const ivec3 izero = ivec3(0);
+    const ivec3 size = ivec3(2, 2, 2);   // @TODO Softcode this
+    const ivec3 pos = ivec3(-1, 0, -1);  // @TODO Softcode this
+    const vec3 toLight = vec3(-0.1, 1, 0.5);
+    in vec3 eye;
+    in vec3 initialRay;
+    out vec4 color;
+    void main() {
+      // vec3 origin = eye,
+      //   ray = initialRay,
+      //   color = vec3(0.0);
+      // ivec3 offset = 1 - ivec3(step(0.0, ray)),
+      //   slab = offset * (size -1);
+      //
+      // for (
+      //   int i = 0; i < ITERATION_LIMIT; ++i
+      // ) {
+      //
+      //   // Break out of the loop if end is reached.
+      //   if (all(greaterThanEqual(slab, izero)) && all(lessThan(slab, size))) {
+      //       break;
+      //   }
+      //
+      //   ivec3 normal, intersection;
+      //   vec3 ts = (vec3(pos + slab + offset) - origin) / ray;
+      //   float minT = min(ts.x, min(ts.y, ts.z));
+      //
+      //   // Compute normal and intersection
+      //   if (ts.x == minT) {
+      //     normal = ivec3(offset.x * 2 - 1);
+      //     intersection = ivec3(
+      //         slab.x,
+      //         int(origin.y + ray.y * minT - float(pos.y)),
+      //         int(origin.z + ray.z * minT - float(pos.z))
+      //     );
+      //   }
+      //   if (ts.y == minT) {
+      //     normal = ivec3(offset.y * 2 - 1);
+      //     intersection = ivec3(
+      //         int(origin.x + ray.x * minT - float(pos.x)),
+      //         slab.y,
+      //         int(origin.z + ray.z * minT - float(pos.z))
+      //     );
+      //   }
+      //   if (ts.y == minT) {
+      //     normal = ivec3(offset.z * 2 - 1);
+      //     intersection = ivec3(
+      //         int(origin.x + ray.x * minT - float(pos.x)),
+      //         int(origin.y + ray.y * minT - float(pos.y)),
+      //         slab.z
+      //     );
+      //   }
+      //
+      //   if (
+      //     minT > 0.0 &&
+      //     all(greaterThanEqual(intersection, izero)) &&
+      //     all(lessThan(intersection, size))
+      //   ) {
+      //     // Look up texture
+      //   }
+      //
+      // }
+      // gl_FragColor = vec4(color, 1.0);
+      color = vec4(0.3, 0.5, 0.2, 1.0);
+    }
+  `);
 
-    gl_FragColor = vec4(color, 1.0);
-  }
-`);
+  // // @TODO Testing code Remove this.
+  // var shader = new Shader('\
+  //   #version 300 es\n\
+  //   precision highp float;\n\
+  //   in vec3 a_vertex;\
+  //   in vec3 a_normal;\
+  //   in vec2 a_coord;\
+  //   out vec3 v_pos;\
+  //   out vec3 v_normal;\
+  //   out vec2 v_coord;\
+  //   uniform mat4 u_mvp;\
+  //   uniform mat4 u_model;\
+  //   void main() {\
+  //     v_pos = (u_model * vec4(a_vertex,1.0)).xyz;\
+  //     v_coord = a_coord;\
+  //     v_normal = (u_model * vec4(a_normal,0.0)).xyz;\
+  //     gl_Position = u_mvp * vec4(a_vertex,1.0);\
+  //   }\
+  //   ', '\
+  //   #version 300 es\n\
+  //   precision highp float;\n\
+  //   precision highp sampler3D;\
+  //   in vec3 v_pos;\n\
+  //   in vec3 v_normal;\n\
+  //   in vec2 v_coord;\
+  //   out vec4 color;\
+  //   uniform vec4 u_color;\
+  //   uniform sampler3D u_texture;\
+  //   void main() {\
+  //     color = u_color * texture( u_texture, v_pos * 0.1 + vec3(0.5) );\
+  //   }\
+  // ');
 
-gl.onmousemove = function(e) {
-  if (e.dragging) {
-    angleY += e.deltaX;
-    angleX += e.deltaY;
-    angleX = Math.max(-90, Math.min(90, angleX));
+  // @TODO Might need to be thrown away
+  // gl.onmousemove = function(e) {
+  //   if (e.dragging) {
+  //     angleY += e.deltaX;
+  //     angleX += e.deltaY;
+  //     angleX = Math.max(-90, Math.min(90, angleX));
+  //     gl.ondraw();
+  //   }
+  // };
+
+  //create basic matrices for cameras and transformation
+  var persp = mat4.create();
+  var view = mat4.create();
+  var model = mat4.create();
+  var mvp = mat4.create();
+  var temp = mat4.create();
+  var identity = mat4.create();
+
+
+  // Get mouse actions
+  gl.captureMouse();
+  gl.onmousemove = function(e)
+  {
+  	if(e.dragging) {
+      mat4.rotateY(model, model, e.deltax * 0.01);
+    }
     gl.ondraw();
   }
-};
 
-gl.ondraw = function() {
-  // Camera setup
-  gl.loadIdentity();
-  gl.translate(0, 0, -10);
-  gl.rotate(angleX, 1, 0, 0);
-  gl.rotate(angleY, 0, 1, 0);
 
-  // Get corner rays
-  var w = gl.canvas.width;
-  var h = gl.canvas.height;
-  var tracer = new GL.Raytracer();
-  shader.uniforms({
-    eye: tracer.eye,
-    ray00: tracer.getRayForPixel(0, h),
-    ray10: tracer.getRayForPixel(w, h),
-    ray01: tracer.getRayForPixel(0, 0),
-    ray11: tracer.getRayForPixel(w, 0)
-  });
+  // Generic gl flags and settings
+  // @TODO Might not want this.
+  gl.clearColor(0.1,0.1,0.1,1);
+  gl.enable( gl.DEPTH_TEST );
 
-  // Trace the rays
-  shader.draw(mesh);
-};
+  gl.ondraw = function() {
 
-gl.fullscreen();
+    // @TODO Might not want this.
+  	gl.clearColor(0.1,0.1,0.1,1);
+  	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+
+    // Set the camera position
+    mat4.perspective(persp, 45 * DEG2RAD, gl.canvas.width / gl.canvas.height, 0.1, 1000);
+    mat4.lookAt(view, [0,20,20],[0,0,0], [0,1,0]);
+
+    // Create modelview and projection matrices
+    mat4.multiply(mvp,persp,view); // @TODO Overridden
+    mat4.multiply(temp,view,model);
+  	mat4.multiply(mvp,persp,temp);
+
+    // Get corner rays
+    var w = gl.canvas.width;
+    var h = gl.canvas.height;
+    var tracer = new GL.Raytracer(mvp);
+    shader.uniforms({
+      eye: tracer.eye,
+      ray00: tracer.getRayForPixel(0, h),
+      ray10: tracer.getRayForPixel(w, h),
+      ray01: tracer.getRayForPixel(0, 0),
+      ray11: tracer.getRayForPixel(w, 0)
+    });
+
+    // Trace the rays
+    shader.draw(mesh);
+  };
+
+  // Attach canvas
+  var container = document.body;
+  container.appendChild(gl.canvas);
+
+  // On resize
+  function resize() {
+    gl.canvas.width = window.innerWidth;
+    gl.canvas.height = window.innerHeight;
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.ondraw();
+  }
+  window.addEventListener('resize', resize);
+  resize();
+}
+
+main();
