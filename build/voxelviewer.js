@@ -27,19 +27,21 @@ function main() {
   var mesh = GL.Mesh.plane();
   var shader = new GL.Shader(`#version 300 es
     precision highp float;
+    uniform vec3 ray00;
+    uniform vec3 ray10;
+    uniform vec3 ray01;
+    uniform vec3 ray11;
     in vec3 a_vertex;
-    in vec3 ray00;
-    in vec3 ray10;
-    in vec3 ray01;
-    in vec3 ray11;
     out vec3 initialRay;
     void main() {
-      vec2 t = a_vertex.xy * 0.5 + 0.5;
+      vec2 t = a_vertex.xy + 0.5;
       initialRay = mix(mix(ray00, ray10, t.x), mix(ray01, ray11, t.x), t.y);
 
-      initialRay = a_vertex;
-      
-      gl_Position = vec4(a_vertex, 1.0);
+      // // TESTING
+      // initialRay = ray10 * 0.5 + 0.5;
+
+      // Transform the unit plane to screen space.
+      gl_Position = vec4(a_vertex * 2.0, 1.0);
     }
   `, `#version 300 es
     precision highp float;
@@ -55,16 +57,16 @@ function main() {
     in vec3 initialRay;
     out vec4 outColor;
     void main() {
-      vec3 origin = eye; // @TODO Does it get passed?
-      vec3 ray = initialRay;
-      vec4 color = vec4(0.0);
-      ivec3 offset = 1 - ivec3(step(0.0, ray));
-      ivec3 slab = offset * (size -1);
-
 
       // TESTING RAY DIRECTIONS
-      outColor = vec4(ray+0.5, 1.0);
+      outColor = vec4(initialRay, 1.0);
 
+      // vec3 origin = eye; // @TODO Does it get passed?
+      // vec3 ray = initialRay;
+      // vec4 color = vec4(0.0);
+      // ivec3 offset = 1 - ivec3(step(0.0, ray));
+      // ivec3 slab = offset * (size -1);
+      //
       // for (
       //   int i = 0; i < ITERATION_LIMIT; ++i
       // ) {
@@ -215,7 +217,6 @@ function main() {
     var w = gl.canvas.width;
     var h = gl.canvas.height;
     var tracer = new GL.Raytracer(mvp);
-    debugger;
     shader.uniforms({
       eye: tracer.eye,
 			u_texture: texture.bind(0),
