@@ -1,5 +1,5 @@
 /**
- * Voxel Viewer
+ * Voxelviewer
  * @author kndlt
  */
 function main() {
@@ -48,8 +48,30 @@ function main() {
     const ivec3 size = ivec3(2, 2, 2);   // @TODO Softcode this
     const ivec3 pos = ivec3(-1, -1, -1);  // @TODO Softcode this
     const vec3 toLight = vec3(-0.1, 1, 0.5);
+    const ivec3 x_axis = ivec3(1, 0 , 0);
+    const ivec3 y_axis = ivec3(0, 1 , 0);
+    const ivec3 z_axis = ivec3(0, 0 , 1);
     in vec3 initialRay;
     out vec4 outColor;
+    vec4 intersectAxis(vec3 origin, vec3 ray, ivec3 pos, ivec3 slab, ivec3 offset, ivec3 axis) {
+      vec3 intersection = vec3(0);
+      float t = 0.0;
+      vec3 ts = (vec3(pos + slab + offset) - origin) / ray;
+      if (dot(ray, vec3(axis)) != 0.0) {
+        t = dot(ts, vec3(axis));
+        intersection = (origin + ray * t - vec3(pos)) * vec3(1 - axis) + vec3(slab * axis);
+      }
+      return vec4(intersection, t);
+    }
+    float intersectSlabs(vec3 origin, vec3 ray, ivec3 pos, ivec3 slab, ivec3 offset, out vec3 hit, out vec3 normal) {
+      float hitT = INFINITY;
+      vec4 intersection;
+      ivec3 axis;
+      axis = x_axis; intersection = intersectAxis(origin, ray, pos, slab, offset, axis); if (all(greaterThanEqual(intersection, vec4(0.0))) && all(lessThan(vec4(intersection), vec4(size, hitT)))) { hitT = intersection.w; hit = intersection.xyz; normal = vec3((offset * 2 - 1) * axis); }
+      axis = y_axis; intersection = intersectAxis(origin, ray, pos, slab, offset, axis); if (all(greaterThanEqual(intersection, vec4(0.0))) && all(lessThan(vec4(intersection), vec4(size, hitT)))) { hitT = intersection.w; hit = intersection.xyz; normal = vec3((offset * 2 - 1) * axis); }
+      axis = z_axis; intersection = intersectAxis(origin, ray, pos, slab, offset, axis); if (all(greaterThanEqual(intersection, vec4(0.0))) && all(lessThan(vec4(intersection), vec4(size, hitT)))) { hitT = intersection.w; hit = intersection.xyz; normal = vec3((offset * 2 - 1) * axis); }
+      return hitT;
+    }
     void main() {
 
       // // For testing ray directions
@@ -59,9 +81,9 @@ function main() {
       vec3 ray = initialRay;
       vec4 color = vec4(0.0);
       ivec3 offset = 1 - ivec3(step(0.0, ray));
-      ivec3 slab = offset * (size -1);
+      ivec3 slab = offset * (size - 1);
 
-      // outColor = vec4(vec3(slab), 0.0);
+      // outColor = vec4(vec3(eye), 0.0);return;
 
       for (int i = 0; i < ITERATION_LIMIT; ++i) {
 
@@ -70,50 +92,120 @@ function main() {
             break;
         }
 
-        ivec3 normal, intersection;
-        vec3 ts = (vec3(pos + slab + offset) - origin) / ray;
-        float minT = min(ts.x, min(ts.y, ts.z));
+        vec3 hit, normal;
+        float hitT = intersectSlabs(origin, ray, pos, slab, offset, hit, normal);
 
-        // Compute normal and intersection
-        if (ts.x == minT) {
-          normal = ivec3(offset.x * 2 - 1);
-          intersection = ivec3(
-              slab.x,
-              int(origin.y + ray.y * minT - float(pos.y)),
-              int(origin.z + ray.z * minT - float(pos.z))
-          );
-          // /* Test */ color = vec4(1.0, 0.0, 0.0, 1.0); break;
-        }
-        if (ts.y == minT) {
-          normal = ivec3(offset.y * 2 - 1);
-          intersection = ivec3(
-              int(origin.x + ray.x * minT - float(pos.x)),
-              slab.y,
-              int(origin.z + ray.z * minT - float(pos.z))
-          );
-          // /* Test */ color = vec4(0.0, 1.0, 0.0, 1.0); break;
-        }
-        if (ts.z == minT) {
-          normal = ivec3(offset.z * 2 - 1);
-          intersection = ivec3(
-              int(origin.x + ray.x * minT - float(pos.x)),
-              int(origin.y + ray.y * minT - float(pos.y)),
-              slab.z
-          );
-          // /* Test */ color = vec4(0.0, 0.0, 1.0, 1.0); break;
-        }
-
-        if (
-          minT > 0.0 &&
-          all(greaterThanEqual(intersection, izero)) &&
-          all(lessThan(intersection, size))
-        ) {
+        if (hitT < INFINITY) {
           // Look up texture
-          color = texture( u_texture, vec3(intersection) + vec3(0.5) );\
+          color = texture( u_texture, hit / vec3(size));
           break;
         }
 
-        slab -= normal;
+        // if (hitT != INFINITY) {
+        //     outColor = vec4(vec3(normal), 1.0);
+        // }
+        // return;
+
+        // vec3 ts = (vec3(pos + slab + offset) - origin) / ray;
+        // axis = x_axis;
+        // if (dot(ray, vec3(axis)) != 0.0) {
+        //   t = dot(ts, vec3(axis));
+        //   intersection =
+        //     ivec3(origin + ray * t - vec3(pos)) * (1 - axis) + slab * axis;
+        //   if(
+        //     t < hitT &&
+        //     all(greaterThanEqual(intersection, izero)) &&
+        //     all(lessThan(intersection, size))
+        //   ) {
+        //     hitT = t;
+        //     hit = intersection;
+        //     normal = (offset * 2 - 1) * axis;
+        //   }
+        // }
+        // axis = y_axis;
+        // if (dot(ray, vec3(axis)) != 0.0) {
+        //   t = dot(ts, vec3(axis));
+        //   intersection =
+        //     ivec3(origin + ray * t - vec3(pos)) * (1 - axis) + slab * axis;
+        //   if(
+        //     t < hitT &&
+        //     all(greaterThanEqual(intersection, izero)) &&
+        //     all(lessThan(intersection, size))
+        //   ) {
+        //     hitT = t;
+        //     hit = intersection;
+        //     normal = (offset * 2 - 1) * axis;
+        //   }
+        // }
+        // axis = z_axis;
+        // if (dot(ray, vec3(axis)) != 0.0) {
+        //   t = dot(ts, vec3(axis));
+        //   intersection =
+        //     ivec3(origin + ray * t - vec3(pos)) * (1 - axis) + slab * axis;
+        //   if(
+        //     t < hitT &&
+        //     all(greaterThanEqual(intersection, izero)) &&
+        //     all(lessThan(intersection, size))
+        //   ) {
+        //     hitT = t;
+        //     hit = intersection;
+        //     normal = (offset * 2 - 1) * axis;
+        //   }
+        // }
+        //
+        // if (hitT != INFINITY) {
+        //     outColor = vec4(1.0);
+        // }
+        // return;
+
+
+
+        // vec3 ts = (vec3(pos + slab + offset) - origin) / ray;
+        // float minT = min(ts.x, min(ts.y, ts.z));
+        //
+        // // outColor = vec4(ts / 100.0 + 0.5, 0.0);return;
+        //
+        // // Compute normal and intersection
+        // if (ts.x == minT) {
+        //   normal = ivec3(offset.x * 2 - 1, 0, 0);
+        //   intersection = ivec3(
+        //       slab.x,
+        //       int(origin.y + ray.y * minT - float(pos.y)),
+        //       int(origin.z + ray.z * minT - float(pos.z))
+        //   );
+        //   // /* Test */ color = vec4(1.0, 0.0, 0.0, 1.0); break;
+        // }
+        // else if (ts.y == minT) {
+        //   normal = ivec3(0, offset.y * 2 - 1, 0);
+        //   intersection = ivec3(
+        //       int(origin.x + ray.x * minT - float(pos.x)),
+        //       slab.y,
+        //       int(origin.z + ray.z * minT - float(pos.z))
+        //   );
+        //   // /* Test */ color = vec4(0.0, 1.0, 0.0, 1.0); break;
+        // }
+        // else if (ts.z == minT) {
+        //   normal = ivec3(0, 0, offset.z * 2 - 1);
+        //   intersection = ivec3(
+        //       int(origin.x + ray.x * minT - float(pos.x)),
+        //       int(origin.y + ray.y * minT - float(pos.y)),
+        //       slab.z
+        //   );
+        //   // /* Test */ color = vec4(0.0, 0.0, 1.0, 1.0); break;
+        // }
+        //
+        // if (
+        //   minT > 0.0 &&
+        //   all(greaterThanEqual(intersection, izero)) &&
+        //   all(lessThan(intersection, size))
+        // ) {
+        //   // Look up texture
+        //   color = vec4(intersection, 1.0);
+        //   // color = texture( u_texture, vec3(intersection) + vec3(0.5) );\
+        //   break;
+        // }
+        //
+        // slab -= normal;
       }
       outColor = color;
     }
