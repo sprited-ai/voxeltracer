@@ -98,7 +98,7 @@ function main() {
         if (hitT < INFINITY) {
           // Look up texture
           vec4 voxelColor = texture( u_texture, hit / vec3(size));
-          color = voxelColor.xyz * dot(normal, toLight);
+          color = voxelColor.xyz * (max(dot(normal, toLight), 0.0) * 0.7 + 0.3);
           break;
         }
 
