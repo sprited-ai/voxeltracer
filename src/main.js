@@ -23,7 +23,6 @@ function main() {
   var texture = new GL.Texture(2, 2, { depth: 2, texture_type: GL.TEXTURE_3D, format: gl.RGBA, magFilter: gl.NEAREST, pixel_data: voxelData } );
   var planeMesh = GL.Mesh.plane();
   var cubeMesh = GL.Mesh.cube({ size: 2, wireframe: true });
-  debugger;
   var flatShader = GL.Shader.getFlatShader();
   var voxelShader = new GL.Shader(`#version 300 es
     precision highp float;
@@ -83,28 +82,25 @@ function main() {
               int(origin.y + ray.y * minT - float(pos.y)),
               int(origin.z + ray.z * minT - float(pos.z))
           );
-          /* Test */ color = vec4(1.0, 0.0, 0.0, 1.0); break;
+          // /* Test */ color = vec4(1.0, 0.0, 0.0, 1.0); break;
         }
-        else if (ts.y == minT) {
+        if (ts.y == minT) {
           normal = ivec3(offset.y * 2 - 1);
           intersection = ivec3(
               int(origin.x + ray.x * minT - float(pos.x)),
               slab.y,
               int(origin.z + ray.z * minT - float(pos.z))
           );
-          /* Test */ color = vec4(0.0, 1.0, 0.0, 1.0); break;
+          // /* Test */ color = vec4(0.0, 1.0, 0.0, 1.0); break;
         }
-        else if (ts.z == minT) {
+        if (ts.z == minT) {
           normal = ivec3(offset.z * 2 - 1);
           intersection = ivec3(
               int(origin.x + ray.x * minT - float(pos.x)),
               int(origin.y + ray.y * minT - float(pos.y)),
               slab.z
           );
-          /* Test */ color = vec4(0.0, 0.0, 1.0, 1.0); break;
-        }
-        else {
-          /* Test */ color = vec4(0.5, 0.5, 0.5, 1.0); break;
+          // /* Test */ color = vec4(0.0, 0.0, 1.0, 1.0); break;
         }
 
         if (
