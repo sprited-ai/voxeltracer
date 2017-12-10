@@ -47,7 +47,7 @@ function main() {
     const ivec3 izero = ivec3(0);
     const ivec3 size = ivec3(2, 2, 2);   // @TODO Softcode this
     const ivec3 pos = ivec3(-1, -1, -1);  // @TODO Softcode this
-    const vec3 toLight = vec3(-0.1, 1, 0.5);
+    const vec3 toLight = normalize(vec3(0.5, 0.7, 1.0));
     const ivec3 x_axis = ivec3(1, 0 , 0);
     const ivec3 y_axis = ivec3(0, 1 , 0);
     const ivec3 z_axis = ivec3(0, 0 , 1);
@@ -79,7 +79,7 @@ function main() {
 
       vec3 origin = eye; // @TODO Does it get passed?
       vec3 ray = initialRay;
-      vec4 color = vec4(0.0);
+      vec3 color = vec3(0.0);
       ivec3 offset = 1 - ivec3(step(0.0, ray));
       ivec3 slab = offset * (size - 1);
 
@@ -97,7 +97,8 @@ function main() {
 
         if (hitT < INFINITY) {
           // Look up texture
-          color = texture( u_texture, hit / vec3(size));
+          vec4 voxelColor = texture( u_texture, hit / vec3(size));
+          color = voxelColor.xyz * dot(normal, toLight);
           break;
         }
 
@@ -207,7 +208,7 @@ function main() {
         //
         // slab -= normal;
       }
-      outColor = color;
+      outColor = vec4(color, 1.0);
     }
   `);
 
@@ -288,7 +289,7 @@ function main() {
 
     // Set the camera position
     mat4.perspective(persp, 45 * DEG2RAD, gl.canvas.width / gl.canvas.height, 0.1, 1000);
-    mat4.lookAt(view, [0,20,20],[0,0,0], [0,1,0]);
+    mat4.lookAt(view, [0,4,10],[0,0,0], [0,1,0]);
 
     // Create modelview and projection matrices
     mat4.multiply(temp, view, model);
