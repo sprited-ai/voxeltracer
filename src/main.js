@@ -33,34 +33,44 @@ function main() {
     void main() {
       vec2 t = a_vertex.xy * 0.5 + 0.5;
       initialRay = mix(mix(ray00, ray10, t.x), mix(ray01, ray11, t.x), t.y);
+
+      initialRay = a_vertex;
+      
       gl_Position = vec4(a_vertex, 1.0);
     }
   `, `#version 300 es
     precision highp float;
     precision highp sampler3D;
     uniform sampler3D u_texture;
+    uniform vec3 eye;
     const float INFINITY = 1.0e9;
     const int ITERATION_LIMIT = 3 * 128;
     const ivec3 izero = ivec3(0);
     const ivec3 size = ivec3(2, 2, 2);   // @TODO Softcode this
     const ivec3 pos = ivec3(-1, 0, -1);  // @TODO Softcode this
     const vec3 toLight = vec3(-0.1, 1, 0.5);
-    in vec3 eye;
     in vec3 initialRay;
-    out vec4 color;
+    out vec4 outColor;
     void main() {
-      // vec3 origin = eye,
-      //   ray = initialRay,
-      //   color = vec3(0.0);
-      // ivec3 offset = 1 - ivec3(step(0.0, ray)),
-      //   slab = offset * (size -1);
-      //
+      vec3 origin = eye; // @TODO Does it get passed?
+      vec3 ray = initialRay;
+      vec4 color = vec4(0.0);
+      ivec3 offset = 1 - ivec3(step(0.0, ray));
+      ivec3 slab = offset * (size -1);
+
+
+      // TESTING RAY DIRECTIONS
+      outColor = vec4(ray+0.5, 1.0);
+
       // for (
       //   int i = 0; i < ITERATION_LIMIT; ++i
       // ) {
       //
+      //   // color = vec4(vec3(slab) / 4.0, 1.0);
+      //
       //   // Break out of the loop if end is reached.
       //   if (all(greaterThanEqual(slab, izero)) && all(lessThan(slab, size))) {
+      //       // color = vec4(vec3(1.0 - float(i) / float(ITERATION_LIMIT)), 1.0);
       //       break;
       //   }
       //
@@ -76,22 +86,28 @@ function main() {
       //         int(origin.y + ray.y * minT - float(pos.y)),
       //         int(origin.z + ray.z * minT - float(pos.z))
       //     );
+      //     /* Test */ color = vec4(1.0, 0.0, 0.0, 1.0); break;
       //   }
-      //   if (ts.y == minT) {
+      //   else if (ts.y == minT) {
       //     normal = ivec3(offset.y * 2 - 1);
       //     intersection = ivec3(
       //         int(origin.x + ray.x * minT - float(pos.x)),
       //         slab.y,
       //         int(origin.z + ray.z * minT - float(pos.z))
       //     );
+      //     /* Test */ color = vec4(0.0, 1.0, 0.0, 1.0); break;
       //   }
-      //   if (ts.y == minT) {
+      //   else if (ts.y == minT) {
       //     normal = ivec3(offset.z * 2 - 1);
       //     intersection = ivec3(
       //         int(origin.x + ray.x * minT - float(pos.x)),
       //         int(origin.y + ray.y * minT - float(pos.y)),
       //         slab.z
       //     );
+      //     /* Test */ color = vec4(0.0, 0.0, 1.0, 1.0); break;
+      //   }
+      //   else {
+      //     /* Test */ color = vec4(0.5, 0.5, 0.5, 1.0); break;
       //   }
       //
       //   if (
@@ -100,11 +116,13 @@ function main() {
       //     all(lessThan(intersection, size))
       //   ) {
       //     // Look up texture
+      //     color = texture( u_texture, vec3(intersection) + vec3(0.5) );\
+      //     break;
       //   }
       //
+      //   slab -= normal;
       // }
-      // gl_FragColor = vec4(color, 1.0);
-      color = vec4(0.3, 0.5, 0.2, 1.0);
+      // outColor = color;
     }
   `);
 
@@ -187,20 +205,21 @@ function main() {
     mat4.lookAt(view, [0,20,20],[0,0,0], [0,1,0]);
 
     // Create modelview and projection matrices
-    mat4.multiply(mvp,persp,view); // @TODO Overridden
-    mat4.multiply(temp,view,model);
-  	mat4.multiply(mvp,persp,temp);
+    mat4.multiply(temp, view, model);
+  	mat4.multiply(mvp, persp, temp);
 
     // Get corner rays
     var w = gl.canvas.width;
     var h = gl.canvas.height;
     var tracer = new GL.Raytracer(mvp);
+    debugger;
     shader.uniforms({
       eye: tracer.eye,
+			u_texture: texture.bind(0),
       ray00: tracer.getRayForPixel(0, h),
       ray10: tracer.getRayForPixel(w, h),
       ray01: tracer.getRayForPixel(0, 0),
-      ray11: tracer.getRayForPixel(w, 0)
+      ray11: tracer.getRayForPixel(w, 0),
     });
 
     // Trace the rays
