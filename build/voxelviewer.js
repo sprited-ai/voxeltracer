@@ -26,6 +26,7 @@ function main() {
   var texture = new GL.Texture(2, 2, { depth: 2, texture_type: GL.TEXTURE_3D, format: gl.RGBA, magFilter: gl.NEAREST, pixel_data: voxelData } );
   var planeMesh = GL.Mesh.plane();
   var cubeMesh = GL.Mesh.cube({ size: 2, wireframe: true });
+  debugger;
   var flatShader = GL.Shader.getFlatShader();
   var voxelShader = new GL.Shader(`#version 300 es
     precision highp float;
@@ -49,7 +50,7 @@ function main() {
     const int ITERATION_LIMIT = 3 * 16; // @TODO Softcode this
     const ivec3 izero = ivec3(0);
     const ivec3 size = ivec3(2, 2, 2);   // @TODO Softcode this
-    const ivec3 pos = ivec3(-1, 0, -1);  // @TODO Softcode this
+    const ivec3 pos = ivec3(-1, -1, -1);  // @TODO Softcode this
     const vec3 toLight = vec3(-0.1, 1, 0.5);
     in vec3 initialRay;
     out vec4 outColor;
