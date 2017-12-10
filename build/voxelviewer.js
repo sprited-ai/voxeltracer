@@ -25,7 +25,7 @@ function main() {
 
   var texture = new GL.Texture(2, 2, { depth: 2, texture_type: GL.TEXTURE_3D, format: gl.RGBA, magFilter: gl.NEAREST, pixel_data: voxelData } );
   var planeMesh = GL.Mesh.plane();
-  var cubeMesh = GL.Mesh.cube({ size: 4, wireframe: true });
+  var cubeMesh = GL.Mesh.cube({ size: 2, wireframe: true });
   var flatShader = GL.Shader.getFlatShader();
   var voxelShader = new GL.Shader(`#version 300 es
     precision highp float;
@@ -38,11 +38,6 @@ function main() {
     void main() {
       vec2 t = a_vertex.xy + 0.5;
       initialRay = mix(mix(ray00, ray10, t.x), mix(ray01, ray11, t.x), t.y);
-
-      // // TESTING
-      // initialRay = ray10 * 0.5 + 0.5;
-
-      // Transform the unit plane to screen space.
       gl_Position = vec4(a_vertex * 2.0, 1.0);
     }
   `, `#version 300 es
@@ -61,7 +56,7 @@ function main() {
     void main() {
 
       // // For testing ray directions
-      // outColor = vec4(initialRay * 0.5 + 0.5, 1.0);
+      outColor = vec4(initialRay * 0.5 + 0.5, 1.0); return;
 
       vec3 origin = eye; // @TODO Does it get passed?
       vec3 ray = initialRay;
@@ -69,9 +64,7 @@ function main() {
       ivec3 offset = 1 - ivec3(step(0.0, ray));
       ivec3 slab = offset * (size -1);
 
-
-
-      outColor = vec4(0.5);
+      // outColor = vec4(0.5,0.5,0.5, 0.0);
 
       // for (int i = 0; i < ITERATION_LIMIT; ++i) {
       //
@@ -198,14 +191,13 @@ function main() {
 
   // Generic gl flags and settings
   // @TODO Might not want this.
-  gl.clearColor(0.1,0.1,0.1,1);
-  gl.enable( gl.DEPTH_TEST );
+  // gl.enable( gl.DEPTH_TEST );
 
   gl.ondraw = function() {
 
     // @TODO Might not want this.
   	gl.clearColor(0.1,0.1,0.1,1);
-  	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
+  	// gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT );
 
 
 
@@ -216,12 +208,6 @@ function main() {
     // Create modelview and projection matrices
     mat4.multiply(temp, view, model);
   	mat4.multiply(mvp, persp, temp);
-
-    // Bounding box
-		flatShader.uniforms({
-			u_color: [1,1,1,1],
-			u_mvp: mvp
-		}).draw(cubeMesh, gl.LINES, "wireframe" );
 
     // Get corner rays
     var w = gl.canvas.width;
@@ -236,8 +222,15 @@ function main() {
       ray11: tracer.getRayForPixel(w, 0),
     });
 
-    // // Trace the rays
-    //voxelShader.draw(planeMesh);
+    // Trace the rays
+    voxelShader.draw(planeMesh);
+
+    // Bounding box overlay
+		flatShader.uniforms({
+			u_color: [1,1,1,1],
+			u_mvp: mvp
+		}).draw(cubeMesh, gl.LINES, "wireframe" );
+
   };
 
   // Attach canvas
