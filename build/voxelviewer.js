@@ -123,16 +123,140 @@ function main() {
 		// }).draw(cubeMesh, gl.LINES, "wireframe" );
   };
 
+  /**
+   * Bytes to String
+   * Code is from Stack Overflow answer
+   * https://stackoverflow.com/a/3195961
+   */
+  function b2s(array) {
+    return String.fromCharCode.apply(String, array);
+  }
+  function uint8(buffer, byteOffset, length) {
+    return new Uint8Array(buffer, byteOffset, length);
+  }
+  function uint32(buffer, byteOffset, length) {
+    return new Uint32Array(buffer, byteOffset, length);
+  }
+  function int32(buffer, byteOffset, length) {
+    return new Int32Array(buffer, byteOffset, length);
+  }
+  function float32(buffer, byteOffset, length) {
+    return new Float32Array(buffer, byteOffset, length);
+  }
+  function readStr(arrayBuffer, byteOffset, length) {
+    return b2s(uint8(arrayBuffer, byteOffset, length));
+  }
+  function readInt(arrayBuffer, byteOffset) {
+    return int32(arrayBuffer, byteOffset)[0];
+  }
+  function readUint(arrayBuffer, byteOffset) {
+    return uint32(arrayBuffer, byteOffset)[0];
+  }
+  function readFloat(arrayBuffer, byteOffset) {
+    return float32(arrayBuffer, byteOffset)[0];
+  }
+
   var decoders = {
     150: {
-      decode(arrayBuffer) {
+      decode(buffer) {
+        var version = readInt(buffer, 4);
+        var mainChunk = this.decodeChunk(buffer, 8);
         debugger;
+      },
+      props: [
+        'plastic',     // bit(0)
+        'roughness',   // bit(1)
+        'specular',    // bit(2)
+        'ior',         // bit(3)
+        'attenuation', // bit(4)
+        'power',       // bit(5)
+        'glow',        // bit(6)
+        'isTotalPower' // bit(7)
+      ],
+      decodeChunk(buffer, chunkStart) {
+        var chunkId = readStr(buffer, chunkStart, 4);
+        var numBytesOfChunkContent = readInt(buffer, chunkStart + 4);
+        var numBytesOfChildrenChunks = readInt(buffer, chunkStart + 8);
+        var contentStart = chunkStart + 12;
+        var childrenStart = contentStart + numBytesOfChunkContent;
+        var chunkSize = 12 + numBytesOfChunkContent + numBytesOfChildrenChunks;
+        var chunk = {
+          id: chunkId,
+          size: chunkSize
+        };
+
+        if (chunkId === 'PACK') {
+          chunk.numModels = readInt(buffer, contentStart);
+        }
+        else if (chunkId === 'SIZE') {
+          chunk.x = readInt(buffer, contentStart);
+          chunk.y = readInt(buffer, contentStart + 4);
+          chunk.z = readInt(buffer, contentStart + 8);
+        }
+        else if (chunkId === 'XYZI') {
+          var numVoxels = chunk.numVoxels = readInt(buffer, contentStart);
+          var voxelReader = uint8(buffer, contentStart + 4, 4 * numVoxels);
+          var voxels = [];
+          for (var voxelItr = 0; voxelItr < numVoxels; ++voxelItr) {
+            var voxel = {
+              x: voxelReader[4 * voxelItr + 0],
+              y: voxelReader[4 * voxelItr + 1],
+              z: voxelReader[4 * voxelItr + 2],
+              colorIndex: voxelReader[4 * voxelItr + 3],
+            };
+            voxels.push(voxel);
+          }
+          chunk.voxels = voxels;
+        }
+        else if (chunkId === 'RGBA') {
+          var colorReader = uint8(buffer, contentStart, 4 * 256);
+          var palette = [];
+          for (var color_itr = 0; color_itr < 256; ++color_itr) {
+            var color = {
+              r: colorReader[4 * color_itr + 0],
+              g: colorReader[4 * color_itr + 1],
+              b: colorReader[4 * color_itr + 2],
+              a: colorReader[4 * color_itr + 3],
+            };
+            palette.push(color);
+          }
+          chunk.palette = palette;
+        }
+        else if (chunkId === 'MATT') {
+          chunk.colorIndex = readInt(buffer, contentStart);
+          chunk.materialType = readInt(buffer, contentStart + 4);
+          chunk.materialWeight = readFloat(buffer, contentStart + 8);
+          var propBits = readUint(buffer, contentStart + 12);
+          var propCounter = 0;
+          for (var propItr = 0; propItr < this.props.length; ++propItr) {
+            var bitMask = 1 << propItr;
+            if (propBits & bitMask) {
+              chunk[this.props[i]] = readFloat(buffer, contentStart + 16 + propCounter * 4);
+              ++propCounter;
+            }
+          }
+        }
+
+        var numBytesOfChildrenChunksRead = 0;
+        var children = [];
+        while (numBytesOfChildrenChunksRead < numBytesOfChildrenChunks) {
+          var childChunk = this.decodeChunk(buffer,
+            childrenStart + numBytesOfChildrenChunksRead
+          );
+          children.push(childChunk);
+          numBytesOfChildrenChunksRead += childChunk.size;
+        }
+
+        if (children.length) {
+          chunk.children = children;
+        }
+
+        return chunk;
       }
     }
   };
 
   function loadFile(file) {
-    debugger;
     // Check for the various File API support.
     if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
       alert('Bro, not supported.');
@@ -142,20 +266,12 @@ function main() {
     reader.onload = function(e) {
       var arrayBuffer = reader.result;
       var error = '';
-      debugger;
       // @TODO Implement https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
-      var signitureReader = new Uint8Array(arrayBuffer, 0, 4);
-      if (
-          String.fromCharCode(signitureReader[0]) !== 'V' ||
-          String.fromCharCode(signitureReader[1]) !== 'O' ||
-          String.fromCharCode(signitureReader[2]) !== 'X' ||
-          String.fromCharCode(signitureReader[3]) !== ' '
-      ) {
+      if (readStr(arrayBuffer, 0, 4) !== 'VOX ') {
         error = 'Can\'t read... Is this *.vox file used in MagicaVoxel?';
         return;
       }
-      var versionReader = new Uint32Array(arrayBuffer, 4, 1);
-      var version = versionReader[0];
+      var version = readInt(arrayBuffer, 4);
 
       var decoder = decoders[version];
       if (!decoder) {
