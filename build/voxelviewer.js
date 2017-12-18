@@ -116,17 +116,126 @@ function main() {
     // Trace the rays
     voxelShader.draw(planeMesh);
 
-    // Bounding box overlay
+    // // Bounding box overlay
 		// flatShader.uniforms({
 		// 	u_color: [1,1,1,1],
 		// 	u_mvp: mvp
 		// }).draw(cubeMesh, gl.LINES, "wireframe" );
   };
 
+  var decoders = {
+    150: {
+      decode(arrayBuffer) {
+        debugger;
+      }
+    }
+  };
+
+  function loadFile(file) {
+    debugger;
+    // Check for the various File API support.
+    if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
+      alert('Bro, not supported.');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var arrayBuffer = reader.result;
+      var error = '';
+      debugger;
+      // @TODO Implement https://github.com/ephtracy/voxel-model/blob/master/MagicaVoxel-file-format-vox.txt
+      var signitureReader = new Uint8Array(arrayBuffer, 0, 4);
+      if (
+          String.fromCharCode(signitureReader[0]) !== 'V' ||
+          String.fromCharCode(signitureReader[1]) !== 'O' ||
+          String.fromCharCode(signitureReader[2]) !== 'X' ||
+          String.fromCharCode(signitureReader[3]) !== ' '
+      ) {
+        error = 'Can\'t read... Is this *.vox file used in MagicaVoxel?';
+        return;
+      }
+      var versionReader = new Uint32Array(arrayBuffer, 4, 1);
+      var version = versionReader[0];
+
+      var decoder = decoders[version];
+      if (!decoder) {
+        error = 'Ah, I don\'t have a decoder for version `${version}`.';
+      }
+
+      decoder.decode(arrayBuffer);
+
+      if (error) {
+        alert(error);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
   // Attach canvas
-  var container = document.body;
+  var container = document.getElementById('canvas-container');
+  var dropZone = document.getElementById('drop-zone');
+  var dropInstruction= document.getElementById('drop-instruction');
+  var dropError= document.getElementById('drop-error');
+  var rollingEyes = document.getElementById('rolling-eyes');
 
   container.appendChild(gl.canvas);
+
+  function showDropZone(instruction, error) {
+    dropZone.setAttribute('hidden', 'false');
+    dropZone.setAttribute('error', error ? 'true' : 'false');
+    dropInstruction.innerHTML = instruction;
+    dropError.innerHTML = error;
+  }
+
+  function hideDropZone() {
+    dropZone.setAttribute('hidden', 'true');
+    dropInstruction.innerHTML = '';
+    dropError.innerHTML = '';
+  }
+
+  // Allow dropping
+  function allowDrop(evt) {
+    evt.preventDefault();
+    var items = evt.dataTransfer.items;
+    var instruction = ''; // No instruction needed.
+    var error = '';
+    if (!items || items.length > 1) {
+      error = 'Just one, please';
+    }
+    showDropZone(instruction, error);
+  }
+
+
+  // Hanlder for droping voxel files
+  function handleDrop(evt) {
+    evt.preventDefault();
+    var files = evt.dataTransfer.files;
+    var error = '';
+    if (!files || files.length < 1) {
+      error = 'Huh?'; // Unreachable.
+    }
+    else if (files.length > 1) {
+      error = 'Just one please.';
+    }
+    else {
+      var file = files[0];
+      if (/\.vox$/i.test(file.name)) {
+        loadFile(file);
+      }
+      else {
+        error = 'Only vox files, ma\'am.';
+      }
+    }
+    if (error) {
+      alert(error);
+    }
+    hideDropZone();
+  }
+
+  // Drop zone
+  gl.canvas.addEventListener('dragend', hideDropZone);
+  gl.canvas.addEventListener('dragover', allowDrop);
+  gl.canvas.addEventListener('drop', handleDrop);
 
   // On resize
   function resize() {
