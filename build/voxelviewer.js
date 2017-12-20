@@ -17,10 +17,6 @@ function main() {
     return;
   }
 
-  var gridSize = vec3.fromValues(4, 4, 4);
-
-  var gridCenter = vec3.fromValues(2, 2, 2);
-
   var toLight = vec3.fromValues(0.5, 0.7, 1.0);
 
   // Normalize light direction
@@ -28,25 +24,11 @@ function main() {
 
   var planeMesh = GL.Mesh.plane();
 
+  var loadedModel = null;
+
   // var cubeMesh = GL.Mesh.cube({ size: 16, wireframe: true });
 
-  var flatShader = GL.Shader.getFlatShader();
-
-  var voxelData = (function () {
-    var data = new Uint8Array( gridSize[0] * gridSize[1] * gridSize[2] * 4 );
-    for(var i = 0; i < data.length; ++i) {
-      data[i] = Math.random() * 255;
-    }
-    return data;
-  })();
-
-  var voxelTexture = new GL.Texture(gridSize[0], gridSize[1], {
-    depth: gridSize[2],
-    texture_type: GL.TEXTURE_3D,
-    format: gl.RGBA,
-    magFilter: gl.NEAREST,
-    pixel_data: voxelData
-  });
+  // var flatShader = GL.Shader.getFlatShader();
 
   var voxelShader = new GL.Shader(
     document.getElementById("shader-vs").text,
@@ -101,20 +83,25 @@ function main() {
     var w = gl.canvas.width;
     var h = gl.canvas.height;
     var tracer = new GL.Raytracer(mvp);
-    voxelShader.uniforms({
-      eye: tracer.eye,
-      size: gridSize,
-      center: gridCenter,
-			voxelTexture: voxelTexture.bind(0),
-      toLight: toLight,
-      ray00: tracer.getRayForPixel(0, h),
-      ray10: tracer.getRayForPixel(w, h),
-      ray01: tracer.getRayForPixel(0, 0),
-      ray11: tracer.getRayForPixel(w, 0)
-    });
 
-    // Trace the rays
-    voxelShader.draw(planeMesh);
+    if (loadedModel) {
+      var size = loadedModel.size;
+      voxelShader.uniforms({
+        eye: tracer.eye,
+        size: [size.x, size.y, size.z],
+        center: [size.x / 2, size.y / 2, size.z / 2],
+  			voxelTexture: loadedModel.voxelTexture.bind(0),
+        paletteTexture: loadedModel.paletteTexture.bind(1),
+        toLight: toLight,
+        ray00: tracer.getRayForPixel(0, h),
+        ray10: tracer.getRayForPixel(w, h),
+        ray01: tracer.getRayForPixel(0, 0),
+        ray11: tracer.getRayForPixel(w, 0)
+      });
+
+      // Trace the rays
+      voxelShader.draw(planeMesh);
+    }
 
     // // Bounding box overlay
 		// flatShader.uniforms({
@@ -247,7 +234,7 @@ function main() {
           for (var propItr = 0; propItr < this.props.length; ++propItr) {
             var bitMask = 1 << propItr;
             if (propBits & bitMask) {
-              chunk[this.props[i]] = readFloat(buffer, contentStart + 16 + propCounter * 4);
+              chunk[this.props[propItr]] = readFloat(buffer, contentStart + 16 + propCounter * 4);
               ++propCounter;
             }
           }
@@ -356,7 +343,7 @@ function main() {
         var model = {
           size: size,
           voxelData: voxelData,
-          paletteData: paletteData
+          paletteData: new Uint8Array(paletteData.buffer)
         };
 
         if (warnings.length) {
@@ -401,6 +388,31 @@ function main() {
       };
       reader.readAsArrayBuffer(file);
     });
+  }
+
+  function loadModel(model) {
+    // Clean up
+    if (loadedModel) {
+      delete loadedModel.voxelTexture;
+      delete loadedModel.paletteTexture;
+    }
+
+    model.voxelTexture = new GL.Texture(model.size.x, model.size.y, {
+      depth: model.size.z,
+      texture_type: GL.TEXTURE_3D,
+      format: gl.ALPHA,
+      internalFormat: gl.ALPHA,
+      magFilter: gl.NEAREST,
+      pixel_data: model.voxelData
+    });
+
+    model.paletteTexture = new GL.Texture(16, 16, {
+      magFilter: gl.NEAREST,
+      pixel_data: model.paletteData
+    });
+
+    loadedModel = model;
+    gl.ondraw();
   }
 
   // Attach canvas
@@ -470,8 +482,8 @@ function main() {
                 resolve({ error: model.error });
                 return;
             }
-
             debugger;
+            loadModel(model);
         });
       }
     }).then((result ) => {
@@ -497,6 +509,28 @@ function main() {
   window.addEventListener('resize', resize);
 
   resize();
+
+  // Load placeholder model.
+  var placeholderModel = (function(x, y, z){
+    return {
+      size: { x: x, y: y, z: z },
+      voxelData: (function () {
+        var data = new Uint8Array( x * y * z );
+        for(var i = 0; i < data.length; ++i) {
+          data[i] = Math.random() > 0.5 ? 0 : Math.random() * 255;
+        }
+        return data;
+      })(),
+      paletteData: (function () {
+        var data = new Uint8Array( 256 * 4 );
+        for(var i = 0; i < data.length; ++i) {
+          data[i] = Math.random() * 255;
+        }
+        return data;
+      })()
+    };
+  })(4, 4, 4);
+  loadModel(placeholderModel);
 }
 
 main();

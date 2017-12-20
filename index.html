@@ -96,7 +96,11 @@
 
       precision highp sampler3D;
 
+      precision highp sampler2D;
+
       uniform sampler3D voxelTexture;
+
+      uniform sampler2D paletteTexture;
 
       uniform vec3 eye;
 
@@ -221,12 +225,24 @@
           }
           // If within bound, then texture lookup.
           else if (all(greaterThanEqual(cellIndex, iZero)) && all(lessThan(cellIndex, ivec3(size)))) {
-            vec4 voxelColor = texture( voxelTexture, (vec3(cellIndex) + 0.5) / size);
-            if (voxelColor.w > 0.5) {
+
+            vec4 voxelLookUp = texture(voxelTexture, (vec3(cellIndex) + 0.5) / size);
+
+            // Testing
+            int index = int(voxelLookUp.a * 256.0);
+
+            if (index > 0) {
 
               // @TODO Shadow ray.
 
-              color = voxelColor.xyz * (max(dot(normal, toLight), 0.0) * 0.8 + 0.2);
+              vec2 uvPalette = vec2(
+                (mod(float(index), 16.0) + 0.5) / 16.0,
+                (float(index/16) + 0.5) / 16.0
+              );
+
+              vec4 paletteLookUp = texture(paletteTexture, uvPalette);
+
+              color = paletteLookUp.xyz * (max(dot(normal, toLight), 0.0) * 0.8 + 0.2);
               break;
             }
           }
