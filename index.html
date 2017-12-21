@@ -226,7 +226,8 @@
           // If within bound, then texture lookup.
           else if (all(greaterThanEqual(cellIndex, iZero)) && all(lessThan(cellIndex, ivec3(size)))) {
 
-            vec4 voxelLookUp = texture(voxelTexture, (vec3(cellIndex) + 0.5) / size);
+            // vec4 voxelLookUp = texture(voxelTexture, (vec3(cellIndex) + 0.5) / size);
+            vec4 voxelLookUp = texelFetch(voxelTexture, cellIndex, 0);
 
             // Testing
             int index = int(voxelLookUp.a * 256.0);
@@ -239,7 +240,6 @@
                 (mod(float(index), 16.0) + 0.5) / 16.0,
                 (float(index/16) + 0.5) / 16.0
               );
-
               vec4 paletteLookUp = texture(paletteTexture, uvPalette);
 
               color = paletteLookUp.xyz * (max(dot(normal, toLight), 0.0) * 0.8 + 0.2);

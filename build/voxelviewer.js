@@ -60,6 +60,9 @@ function main() {
     gl.ondraw();
   };
 
+  // GL pixel alignment for loading non-cubic textures.
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+
   // Generic gl flags and settings
   // @TODO Might want this.
   // gl.enable( gl.DEPTH_TEST );
@@ -73,7 +76,7 @@ function main() {
 
     // Set the camera position
     mat4.perspective(persp, 45 * DEG2RAD, gl.canvas.width / gl.canvas.height, 0.1, 1000);
-    mat4.lookAt(view, [0,20,70],[0,0,0], [0,1,0]);
+    mat4.lookAt(view, [0,10,30],[0,0,0], [0,1,0]);
 
     // Create modelview and projection matrices
     mat4.multiply(temp, view, model);
@@ -528,7 +531,7 @@ function main() {
         return data;
       })()
     };
-  })(32, 32, 32);
+  })(5, 5, 5);
   loadModel(placeholderModel);
 }
 
