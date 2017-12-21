@@ -1,6 +1,16 @@
 /**
  * Voxelviewer
  * @author kndlt
+ *
+ * Supported browsers (WebGL 1.0):
+ *
+ * - Edge 15+
+ * - Chrome 49+
+ * - Chorme Android 62+
+ * - Safari 10.2+
+ * - iOS Safari 10.2+
+ *
+ * @TODO Need to downgrade to WebGL 1.0 in order to support other browsers.
  */
 function main() {
 
