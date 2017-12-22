@@ -7,13 +7,22 @@
  *
  * Supported browsers (WebGL 1.0):
  *
- * - Edge 15+
- * - Chrome 49+
- * - Chorme Android 62+
- * - Safari 10.2+
- * - iOS Safari 10.2+
+ * - [ ] Edge 15+
+ * - [x] Chrome 49+
+ * - [ ] Chorme Android 62+
+ * - [ ] Safari 10.2+
+ * - [ ] iOS Safari 10.2+
  *
+ * @TODO Display upgrade message when not compatible.
  * @TODO Need to downgrade to WebGL 1.0 in order to support other browsers.
+ *     This means that we will need to pack voxel data into 2D texture.
+ *     For 128^3 bytes (= ~ 2 mb), I need to construct, atlas texture.
+ *     This will involve computing minimum power-2 sized image.
+ *     One possible implementation is to take the 1-dimensional 3d texture
+ *     data, and just get pow-2 square that will fit all that data,
+ *     then load that 1-d data into it. This will disable all mipmapping,
+ *     but might work. We have to try it.
+ *
  */
 function main() {
 
@@ -86,7 +95,7 @@ function main() {
 
     // Set the camera position
     mat4.perspective(persp, 45 * DEG2RAD, gl.canvas.width / gl.canvas.height, 0.1, 1000);
-    mat4.lookAt(view, [0,10,30],[0,0,0], [0,1,0]);
+    mat4.lookAt(view, [0,40,100],[0,0,0], [0,1,0]);
 
     // Create modelview and projection matrices
     mat4.multiply(temp, view, model);
@@ -335,7 +344,7 @@ function main() {
         var voxelData = new Uint8Array(size.x * size.y * size.z);
         for (var voxelI = 0; voxelI < voxels.length; ++voxelI) {
             var voxel = voxels[voxelI];
-            voxelData[voxel.x + size.x * voxel.z + size.x * size.z * (size.y - voxel.y - 1)] =
+            voxelData[voxel.x + size.x * voxel.z + size.x * size.y * (size.z - voxel.y - 1)] =
               voxel.colorIndex;
         }
 
@@ -410,6 +419,7 @@ function main() {
       delete loadedModel.paletteTexture;
     }
 
+    // X first, then Y, then Z
     model.voxelTexture = new GL.Texture(model.size.x, model.size.y, {
       depth: model.size.z,
       texture_type: GL.TEXTURE_3D,
