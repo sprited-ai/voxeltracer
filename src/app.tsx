@@ -11,6 +11,16 @@ function component() {
     element.innerHTML = _.join(['Hello', 'webpack'], ' ');
 
     return element;
-  }
+}
 
-  document.body.appendChild(component());
+// document.body.appendChild(component());
+
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
+
+ReactDOM.render(
+  <div>Use TypeScript with React</div>,
+  document.getElementById('root')
+);
+
+
