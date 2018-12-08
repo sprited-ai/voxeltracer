@@ -33,6 +33,6 @@
       "ts",
       "js"
     ],
-    "testRegex": "^.+\\.spec\\.ts$"
+    "testRegex": "^.+\\.test\\.ts$"
   }
 }
