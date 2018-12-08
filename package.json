@@ -8,9 +8,6 @@
     "build": "webpack --config webpack.prod.js",
     "test": "jest"
   },
-  "files": [
-    "dist"
-  ],
   "repository": "git+https://github.com/kndlt/voxelviewer.git",
   "keywords": [],
   "author": "kndlt <kndlt22@gmail.com>",
@@ -20,11 +17,16 @@
   },
   "homepage": "https://github.com/kndlt/voxelviewer#readme",
   "dependencies": {
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.11",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3"
   },
   "devDependencies": {
     "@types/jest": "^23.3.10",
     "@types/lodash": "^4.14.118",
+    "@types/react": "^16.7.13",
+    "@types/react-dom": "^16.0.11",
+    "html-webpack-plugin": "^3.2.0",
     "jest": "^23.6.0",
     "ts-jest": "^23.10.5",
     "ts-loader": "^5.3.1",

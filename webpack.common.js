@@ -1,7 +1,9 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
-  entry: './src/index.ts',
+  entry: './src/app.tsx',
   module: {
     rules: [
       {
@@ -15,7 +17,10 @@ module.exports = {
     extensions: [ '.tsx', '.ts', '.js' ]
   },
   output: {
-    filename: 'bundle.js',
+    filename: 'app.bundle.js',
     path: path.resolve(__dirname, 'dist')
-  }
+  },
+  plugins: [
+    new HtmlWebpackPlugin({template: './src/index.html'})
+  ]
 };

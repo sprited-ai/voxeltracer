@@ -1,4 +1,4 @@
-import { sum } from "./index";
+import { sum } from "./app";
 
 describe("sum", () => {
   it("sums two numbers", () => {
