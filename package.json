@@ -1,44 +1,47 @@
 {
   "name": "voxelviewer",
   "version": "1.0.0",
-  "description": "View voxels online",
-  "main": "src/main.js",
+  "description": "",
+  "main": "src/index.ts",
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "start": "rollup -c -w & serve && fg; echo 0"
+    "start": "webpack-dev-server --open --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js",
+    "test": "jest"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kndlt/voxelviewer.git"
-  },
-  "keywords": [
-    "voxel",
-    "magicavoxel",
-    "webgl",
-    "import",
-    "vox",
-    "export",
-    "game",
-    "asset",
-    "viewer",
-    "fast"
+  "files": [
+    "dist"
   ],
-  "author": "kndlt",
-  "license": "ISC",
+  "repository": "git+https://github.com/kndlt/voxelviewer.git",
+  "keywords": [],
+  "author": "kndlt <kndlt22@gmail.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/kndlt/voxelviewer/issues"
   },
   "homepage": "https://github.com/kndlt/voxelviewer#readme",
   "dependencies": {
-    "date-fns": "^1.28.5",
-    "serve": "^6.0.2"
+    "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "eslint": "^4.11.0",
-    "rollup": "^0.46.0",
-    "rollup-plugin-commonjs": "^8.0.2",
-    "rollup-plugin-node-resolve": "^3.0.0",
-    "rollup-plugin-uglify": "^2.0.1"
+    "@types/jest": "^23.3.10",
+    "@types/lodash": "^4.14.118",
+    "jest": "^23.6.0",
+    "ts-jest": "^23.10.5",
+    "ts-loader": "^5.3.1",
+    "typescript": "^3.2.2",
+    "webpack": "^4.27.1",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10",
+    "webpack-merge": "^4.1.4"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ],
+    "testRegex": "^.+\\.test\\.ts$"
   }
 }
