@@ -6,6 +6,7 @@
   "scripts": {
     "start": "webpack-dev-server --open --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js",
+    "export": "cpx dist/**/* docs",
     "test": "jest"
   },
   "repository": "git+https://github.com/kndlt/voxelviewer.git",
@@ -26,6 +27,7 @@
     "@types/lodash": "^4.14.118",
     "@types/react": "^16.7.13",
     "@types/react-dom": "^16.0.11",
+    "cpx": "^1.5.0",
     "html-webpack-plugin": "^3.2.0",
     "jest": "^23.6.0",
     "ts-jest": "^23.10.5",
