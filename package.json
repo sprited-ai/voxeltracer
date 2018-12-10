@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/kndlt/voxelviewer/issues"
   },
-  "homepage": "https://github.com/kndlt/voxelviewer#readme",
+  "homepage": "https://kndlt.github.io/voxelviewer",
   "dependencies": {
     "@types/gl-react": "^3.15.1",
     "@types/gl-react-dom": "^3.15.2",
