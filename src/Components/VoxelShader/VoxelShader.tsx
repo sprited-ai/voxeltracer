@@ -18,11 +18,7 @@ const shaders = Shaders.create({
       uniform mat4 projectionMatrixInverse;
       uniform vec3 eye;
       void main() {
-        // Matrix4 invertedModelViewProjectionMatrix =
-        // (_camera.projectionMatrix * _camera.viewMatrix * _modelMatrix).inverted();
-        // vec4 worldPosition = invertedModelViewProjection * position;
-        // vec3 initialRay = worldPosition.xyz / worldPosition.w - eye;
-        // gl_FragColor = vec4(uv.x, uv.y, blue, 1.0);
+        // TODO Optimize by pre-computing matrices or initial rays itself
         vec4 q = matrixWorldInverse * projectionMatrixInverse * vec4(uv - 0.5, 0.0, 1.0);
         vec3 initialRay = normalize(q.xyz / q.w - eye);
         gl_FragColor = projectionMatrixInverse * vec4(initialRay * 255.0, 1.0);
