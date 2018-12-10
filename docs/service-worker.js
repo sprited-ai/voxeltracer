@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/kndlt/voxelviewer/precache-manifest.ef1da27450c912dd94f10d4892c7f96c.js"
+  "/voxelviewer/precache-manifest.3ec8ba958a4be4656b66bdc33de88c60.js"
 );
 
 workbox.clientsClaim();
@@ -28,7 +28,7 @@ self.__precacheManifest = [].concat(self.__precacheManifest || []);
 workbox.precaching.suppressWarnings();
 workbox.precaching.precacheAndRoute(self.__precacheManifest, {});
 
-workbox.routing.registerNavigationRoute("/kndlt/voxelviewer/index.html", {
+workbox.routing.registerNavigationRoute("/voxelviewer/index.html", {
   
   blacklist: [/^\/_/,/\/[^\/]+\.[^\/]+$/],
 });
