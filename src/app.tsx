@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 
 export function sum(a: number, b: number) {
     return a + b;
@@ -15,12 +15,41 @@ function component() {
 
 // document.body.appendChild(component());
 
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Shaders, Node, GLSL } from "gl-react";
+import { Surface } from "gl-react-dom";
 
-ReactDOM.render(
-  <div>Voxel Voxel Voxel</div>,
-  document.getElementById('root')
-);
+const shaders = Shaders.create({
+    helloBlue: {
+        frag: GLSL`
+            precision highp float;
+            varying vec2 uv;
+            uniform float blue;
+            void main() {
+                gl_FragColor = vec4(uv.x, uv.y, blue, 1.0);
+            }
+        `
+    }
+});
+
+class VoxelViewer extends React.Component {
+    
+    render() {
+        return (
+            // @ts-ignore
+            <Surface width={300} height={300}>
+                <Node shader={shaders.helloBlue} uniforms={{ blue: 0.5 }} />
+            </Surface>
+        );
+    }
+
+}
 
 
+
+
+  ReactDOM.render(
+    <VoxelViewer />,
+    document.getElementById('root')
+  );
