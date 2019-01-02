@@ -24,8 +24,8 @@
     "@types/jest": "23.3.10",
     "@types/lodash": "^4.14.118",
     "@types/node": "10.12.12",
-    "@types/react": "16.7.13",
-    "@types/react-dom": "16.0.11",
+    "@types/react": "^16.7.13",
+    "@types/react-dom": "^16.0.11",
     "@types/three": "^0.93.10",
     "babel-core": "7.0.0-bridge.0",
     "babel-eslint": "9.0.0",
@@ -130,6 +130,9 @@
       "jsx",
       "node"
     ]
+  },
+  "resolutions": {
+    "@types/react": "^16.7.18"
   },
   "babel": {
     "presets": [
