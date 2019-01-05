@@ -22,7 +22,6 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
   orbitControls?: OrbitControls;
 
   constructor(props: VoxelViewerProps) {
-
     super(props);
     this.scene = new Scene();
     this.camera = new PerspectiveCamera(75, 1, 0.01, 1000);
@@ -65,7 +64,6 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
   }
 
   render() {
-
     // const eye: Vector3 = this.camera.position;
     // const matrixWorldInverse: Matrix4 = this.camera.matrixWorldInverse;
     // // @ts-ignore
@@ -87,3 +85,4 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
 
   }
 }
+
