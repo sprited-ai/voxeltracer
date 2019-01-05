@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Scene, PerspectiveCamera, Vector3, Matrix4 } from "three";
 import { Surface } from "gl-react-dom";
 import VoxelShader from '../VoxelShader/VoxelShader';
+import ReactAnimationFrame from 'react-animation-frame';
 
 const OrbitControls = require('three-orbit-controls')(THREE);
 
@@ -10,13 +11,14 @@ interface OrbitControls extends THREE.OrbitControls {}
 
 interface VoxelViewerProps { }
 
-interface VoxelViewerStateProps {
+interface VoxelViewerState {
+  progress: number,
   eye: number[],
   matrixWorldInverse: Float32Array,
   projectionMatrixInverse: Float32Array
 }
 
-export default class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerStateProps> {
+class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   scene: Scene;
   camera: PerspectiveCamera;
   orbitControls?: OrbitControls;
@@ -28,6 +30,7 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
     this.camera.position.set(0, 0, 5);
     this.camera.lookAt(new Vector3(0, 0, 0));
     this.state = {
+      progress: 0,
       eye: this.camera.position.toArray(),
       matrixWorldInverse: this.camera.matrixWorldInverse.elements,
       //@ts-ignore
@@ -35,17 +38,28 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
     };
   }
 
+  startAnimation(): void {
+    (this.props as any).startAnimation();
+  }
+
+  endAnimation(): void {
+    (this.props as any).endAnimation();
+  }
+
   didOrbit = (event: Event) => {
     this.cameraDidUpdate();
   }
 
   cameraDidUpdate() {
+    this.endAnimation();
     this.setState({
+      progress: 0,
       eye: this.camera.position.toArray(),
       matrixWorldInverse: this.camera.matrixWorldInverse.elements,
       //@ts-ignore
       projectionMatrixInverse: this.camera.projectionMatrixInverse.elements
     });
+    this.startAnimation();
   }
 
   componentDidMount() {
@@ -63,6 +77,14 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
 
   }
 
+  onAnimationFrame(time: number) {
+    const { progress } = this.state;
+    this.setState({ progress: progress + 0.1 });
+    if (progress >= 1) {
+      this.endAnimation();
+    }
+  }
+
   render() {
     // const eye: Vector3 = this.camera.position;
     // const matrixWorldInverse: Matrix4 = this.camera.matrixWorldInverse;
@@ -76,6 +98,7 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
       // @ts-ignore
       <Surface width={300} height={300}>
         <VoxelShader
+          progress={this.state.progress}
           eye={this.state.eye}
           matrixWorldInverse={this.state.matrixWorldInverse}
           projectionMatrixInverse={this.state.projectionMatrixInverse}
@@ -86,3 +109,4 @@ export default class VoxelViewer extends React.Component<VoxelViewerProps, Voxel
   }
 }
 
+export default ReactAnimationFrame(VoxelViewer);
