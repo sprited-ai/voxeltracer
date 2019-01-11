@@ -15,7 +15,7 @@ interface VoxelViewerProps { }
 interface VoxelViewerState {
   progress: number;
   eye: number[];
-  matrixWorldInverse: Float32Array;
+  viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
   model: VoxelArt;
 }
@@ -28,8 +28,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   constructor(props: VoxelViewerProps) {
     super(props);
     this.scene = new Scene();
-    this.camera = new PerspectiveCamera(75, 1, 0.01, 1000);
-    this.camera.position.set(0, 0, 5);
+    this.camera = new PerspectiveCamera(45, 1, 0.01, 1000);
+    this.camera.position.set(0, 0, 10);
     this.camera.lookAt(new Vector3(0, 0, 0));
 
     const model = new VoxelArt();
@@ -39,7 +39,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       model,
       progress: 0,
       eye: this.camera.position.toArray(),
-      matrixWorldInverse: this.camera.matrixWorldInverse.elements,
+      viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
       projectionMatrixInverse: this.camera.projectionMatrixInverse.elements
     };
@@ -62,7 +62,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     this.setState({
       progress: 0,
       eye: this.camera.position.toArray(),
-      matrixWorldInverse: this.camera.matrixWorldInverse.elements,
+      viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
       projectionMatrixInverse: this.camera.projectionMatrixInverse.elements
     });
@@ -70,7 +70,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 
   componentDidMount() {
-    const orbitControls = this.orbitControls = new OrbitControls( this.camera );
+    const orbitControls: OrbitControls = this.orbitControls = new OrbitControls(this.camera);
     orbitControls.addEventListener('change', this.didOrbit);
   }
 
@@ -94,7 +94,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   render() {
     // const eye: Vector3 = this.camera.position;
-    // const matrixWorldInverse: Matrix4 = this.camera.matrixWorldInverse;
+    // const viewMatrixInverse: Matrix4 = this.camera.viewMatrixInverse;
     // // @ts-ignore
     // const projectionMatrixInverse: Matrix4 = this.camera.projectionMatrixInverse;
 
@@ -108,7 +108,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
           model={this.state.model}
           progress={this.state.progress}
           eye={this.state.eye}
-          matrixWorldInverse={this.state.matrixWorldInverse}
+          viewMatrixInverse={this.state.viewMatrixInverse}
           projectionMatrixInverse={this.state.projectionMatrixInverse}
         />
       </Surface>
