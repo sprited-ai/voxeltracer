@@ -59,6 +59,11 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   cameraDidUpdate() {
     this.endAnimation();
+
+    // TODO: Figure out why this is needed.
+    // Ideally, this should have been handled by the Orbit controlls.
+    this.camera.lookAt(new Vector3(0, 0, 0));
+
     this.setState({
       progress: 0,
       eye: this.camera.position.toArray(),
