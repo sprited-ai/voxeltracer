@@ -33,7 +33,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     this.camera.lookAt(new Vector3(0, 0, 0));
 
     const model = new VoxelArt();
-    model.size = new Vector3(1,1,1);
+    model.size = new Vector3(4,4,4);
 
     this.state = {
       model,
@@ -111,7 +111,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       // (_camera.projectionMatrix * _camera.viewMatrix * _modelMatrix).inverted();
 
       // @ts-ignore
-      <Surface width={512} height={512} pixelRatio={pixelRatio}>
+      <Surface width={300} height={300} pixelRatio={pixelRatio}>
         <VoxelShader
           model={this.state.model}
           progress={this.state.progress}
