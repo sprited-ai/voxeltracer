@@ -16,8 +16,11 @@ uniform float progress;
 #pragma glslify: Ray = require('./Structs/Ray')
 #pragma glslify: Hit = require('./Structs/Hit')
 #pragma glslify: castRay = require('./Functions/castRay')
+#pragma glslify: castShadow = require('./Functions/castShadow')
 #pragma glslify: intersectModel = require('./Functions/intersectModel')
 // #pragma glslify: random = require('./Functions/random')
+
+const float EPSILON = 0.0001;
 
 void main() {
 
@@ -33,10 +36,20 @@ void main() {
 
   Hit hit = intersectModel(ray, model);
 
-  vec3 lightDir = normalize(vec3(-1.0, 2.0, -2.0));
+  vec3 lightDir = normalize(vec3(-1.1, 1.9, -1.7));
 
   if (hit.didHit) {
-    gl_FragColor.rgb = vec3(max(dot(hit.normal, lightDir), 0.0) * 0.8 + 0.2);
+
+    // test depth.
+    // gl_FragColor = vec4(hit.t * vec3(0.1), 1.0); return;
+
+    // Shadow ray
+    float shadowMultiplier = castShadow(hit.pos, model, lightDir);
+
+    vec3 color = vec3(1.0);
+    float lightMultiplier = max(dot(hit.normal, lightDir), 0.0);
+    float ambience = 0.2;
+    gl_FragColor.rgb = (1.0 - ambience) * color * shadowMultiplier * lightMultiplier + ambience;
     gl_FragColor.a = 1.0;
   }
   else {

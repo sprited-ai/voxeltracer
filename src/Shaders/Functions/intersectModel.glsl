@@ -6,6 +6,7 @@
 
 const float EPSILON = 0.0001;
 const int ITERATION_LIMIT = 400;
+const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 
 /**
  * Intersect model
@@ -16,16 +17,22 @@ Hit intersectModel(Ray ray, Model model) {
 
   // Intersect BB
   vec2 tBox = intersectBoundingBox(ray, boxMin, boxMax);
+  float near = tBox.x;
+  float far = tBox.y;
+  vec3 origin;
 
-  if (tBox.x > tBox.y) {
-    return Hit(false, 0.0, vec3(0), 0);
+  // Ray originates from with in the bounding box.
+  if (near <= 0.0 && far > 0.0) {
+    origin = ray.origin;
   }
-
-  // The t for hitting bounding box
-  float boxT = tBox.x;
-
-  // Pick origin just short of intersection point
-  vec3 origin = ray.origin + ray.dir * (boxT - EPSILON);
+  // On-route
+  else if (near > 0.0 && far > near) {
+    origin = ray.origin + ray.dir * (near - EPSILON);
+  }
+  // No intersection
+  else {
+    return miss;
+  }
 
   // Origin from perspective of the grid (0, 0) position
   vec3 toOrigin = origin - boxMin;
@@ -46,7 +53,7 @@ Hit intersectModel(Ray ray, Model model) {
   vec3 hitNormal;
 
   // Hit T
-  float hitT;
+  float hitT = 0.0;
 
   for (int it = 0; it < ITERATION_LIMIT; ++it) {
 
@@ -55,19 +62,16 @@ Hit intersectModel(Ray ray, Model model) {
 
     if (tSet.x == minT) {
         tSet.x += deltaT.x;
-        hitT = tSet.x;
         cellIndex.x += int(sign(ray.dir.x));
         hitNormal = vec3(-sign(ray.dir.x), 0.0, 0.0);
     }
     else if (tSet.y == minT) {
         tSet.y += deltaT.y;
-        hitT = tSet.y;
         cellIndex.y += int(sign(ray.dir.y));
         hitNormal = vec3(0.0, -sign(ray.dir.y), 0.0);
     }
     else {
         tSet.z += deltaT.z;
-        hitT = tSet.z;
         cellIndex.z += int(sign(ray.dir.z));
         hitNormal = vec3(0.0, 0.0, -sign(ray.dir.z));
     }
@@ -80,13 +84,20 @@ Hit intersectModel(Ray ray, Model model) {
     else if (all(greaterThanEqual(cellIndex, ivec3(0))) && all(lessThan(cellIndex, ivec3(model.size)))) {
 
       // Mod
-      if (mod(cellIndex.y, 2) == 0) {
-        return Hit(true, hitT, hitNormal, 1);
+      if (mod(cellIndex.y, 2) == 0 && mod(cellIndex.x, 2) == 0) {
+
+        // Hit
+        vec3 voxMin = vec3(cellIndex + model.pos);
+        vec3 voxMax = voxMin + 1.0;
+        vec2 tVox = intersectBoundingBox(ray, voxMin, voxMax);
+        float hitT = tVox.x;
+        vec3 hitPos = ray.origin + ray.dir * hitT;
+        return Hit(true, hitT, hitPos, hitNormal, 1);
       }
     }
   }
 
-  return Hit(false, 0.0, vec3(0), 0);
+  return miss;
 }
 
 #pragma glslify: export(intersectModel)
