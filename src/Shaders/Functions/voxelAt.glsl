@@ -1,7 +1,7 @@
 #pragma glslify: Model = require('../Structs/Model')
 #pragma glslify: mod = require('../Functions/mod')
 
-uniform sampler2D voxelTexture;
+uniform sampler2D modelTexture;
 
 int voxelAt(Model model, ivec3 cellIndex) {
   // 4 stacks of y axis cross section in one slate.
@@ -12,7 +12,7 @@ int voxelAt(Model model, ivec3 cellIndex) {
   ivec2 slatePos = slate * model.size.xz;
   ivec2 texelPos = slatePos + cellIndex.xz;
   vec2 uv = (vec2(texelPos) + 0.5) / vec2(model.textureSize);
-  vec4 slateValue = texture2D(voxelTexture, uv);
+  vec4 slateValue = texture2D(modelTexture, uv);
   float value;
 
   if (sliceIndex == 0) {

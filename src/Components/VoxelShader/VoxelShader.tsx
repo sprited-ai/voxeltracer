@@ -21,7 +21,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
   const { eye, viewMatrixInverse, projectionMatrixInverse, progress, model } = props;
   const modelSize = model.size.toArray();
   const modelTexture = model.texture;
-  const modelTextureSize = model.texture.shape;
+  const modelTextureSize = model.textureSize.toArray();
   return (
     <Node
       shader={shaders.vt01}

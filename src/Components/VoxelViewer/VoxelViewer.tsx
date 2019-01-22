@@ -103,7 +103,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // const projectionMatrixInverse: Matrix4 = this.camera.projectionMatrixInverse;
 
     // Render with minimum pixel ratio of 2.
-    const pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
+    const pixelRatio = window.devicePixelRatio || 1;
 
     return (
       // Matrix4 invertedModelViewProjectionMatrix =

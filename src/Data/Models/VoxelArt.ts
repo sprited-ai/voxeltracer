@@ -26,4 +26,7 @@ export default class VoxelArt {
 
     this.texture = ndarray(textureData, [width, width, 4]);
   }
+  get textureSize(): Vector2 {
+    return new Vector2(this.texture.shape[0], this.texture.shape[1]);
+  }
 }

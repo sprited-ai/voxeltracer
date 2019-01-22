@@ -84,16 +84,17 @@ Hit intersectModel(Ray ray, Model model) {
     // If within bound, then texture lookup.
     else if (all(greaterThanEqual(cellIndex, ivec3(0))) && all(lessThan(cellIndex, ivec3(model.size)))) {
 
-      // Mod
-      if (mod(cellIndex.y, 2) == 0 && mod(cellIndex.x, 2) == 0) {
+      // Check voxel
+      int paletteIndex = voxelAt(model, cellIndex);
 
-        // Hit
+      // Hit
+      if (paletteIndex > 0) {
         vec3 voxMin = vec3(cellIndex + model.pos);
         vec3 voxMax = voxMin + 1.0;
         vec2 tVox = intersectBoundingBox(ray, voxMin, voxMax);
         float hitT = tVox.x;
         vec3 hitPos = ray.origin + ray.dir * hitT;
-        return Hit(true, hitT, hitPos, hitNormal, 1);
+        return Hit(true, hitT, hitPos, hitNormal, paletteIndex);
       }
     }
   }
