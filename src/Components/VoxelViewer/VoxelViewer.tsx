@@ -1,6 +1,6 @@
 import React from "react";
 import * as THREE from 'three';
-import { Scene, PerspectiveCamera, Vector3, Matrix4 } from "three";
+import { Scene, PerspectiveCamera, Vector3, Vector2 } from "three";
 import { Surface } from "gl-react-dom";
 import VoxelShader from '../VoxelShader/VoxelShader';
 import ReactAnimationFrame from 'react-animation-frame';
@@ -32,8 +32,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     this.camera.position.set(0, 0, 10);
     this.camera.lookAt(new Vector3(0, 0, 0));
 
-    const model = new VoxelArt();
-    model.size = new Vector3(4,4,4);
+    const model = new VoxelArt(new Vector3(4,4,4));
 
     this.state = {
       model,

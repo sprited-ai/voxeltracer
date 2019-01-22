@@ -1,15 +1,15 @@
 precision highp float;
 precision highp sampler2D;
 
-uniform sampler2D voxelTexture;
+uniform sampler2D modelTexture;
 uniform sampler2D paletteTexture;
-uniform ivec2 voxelTextureSize;
 varying vec2 uv;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;
 uniform ivec3 modelPos;
 uniform ivec3 modelSize;
+uniform ivec2 modelTextureSize;
 uniform float progress;
 
 #pragma glslify: Model = require('./Structs/Model')
@@ -24,7 +24,13 @@ const float EPSILON = 0.0001;
 
 void main() {
 
-  Model model = Model(-modelSize/2, modelSize);
+  // Debug texture.
+  // gl_FragColor = vec4(1.0,0.0,0.0,1.0); return;
+  vec4 texelValue = texture2D(modelTexture, uv);
+  gl_FragColor = vec4(texelValue.rgb, 1.0); return;
+
+
+  Model model = Model(0, -modelSize/2, modelSize, modelTextureSize);
 
   Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, uv);
 

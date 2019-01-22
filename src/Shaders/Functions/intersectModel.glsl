@@ -2,6 +2,7 @@
 #pragma glslify: Hit = require('../Structs/Hit')
 #pragma glslify: Model = require('../Structs/Model')
 #pragma glslify: mod = require('../Functions/mod')
+#pragma glslify: voxelAt = require('../Functions/voxelAt')
 #pragma glslify: intersectBoundingBox = require('./intersectBoundingBox')
 
 const float EPSILON = 0.0001;
