@@ -17,7 +17,7 @@ interface VoxelViewerState {
   eye: number[];
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
-  model: VoxelArt;
+  models: VoxelArt[];
 }
 
 class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
@@ -29,13 +29,27 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     super(props);
     this.scene = new Scene();
     this.camera = new PerspectiveCamera(45, 1, 0.01, 1000);
-    this.camera.position.set(0, 0, 10);
+    this.camera.position.set(0, 0, 20);
     this.camera.lookAt(new Vector3(0, 0, 0));
 
-    const model = new VoxelArt(new Vector3(4,4,4));
+    const models = [];
+
+    // Sample model.
+    models.push(
+      new VoxelArt(
+        new Vector3(0, -2, -2),
+        new Vector3(4, 4, 4)
+      )
+    );
+    models.push(
+      new VoxelArt(
+        new Vector3(-4, -2, -2),
+        new Vector3(4, 4, 4)
+      )
+    );
 
     this.state = {
-      model,
+      models,
       progress: 0,
       eye: this.camera.position.toArray(),
       viewMatrixInverse: this.camera.matrixWorld.elements,
@@ -103,7 +117,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // const projectionMatrixInverse: Matrix4 = this.camera.projectionMatrixInverse;
 
     // Render with minimum pixel ratio of 2.
-    const pixelRatio = window.devicePixelRatio || 1;
+    const pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
 
     return (
       // Matrix4 invertedModelViewProjectionMatrix =
@@ -112,7 +126,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       // @ts-ignore
       <Surface width={300} height={300} pixelRatio={pixelRatio}>
         <VoxelShader
-          model={this.state.model}
+          models={this.state.models}
           progress={this.state.progress}
           eye={this.state.eye}
           viewMatrixInverse={this.state.viewMatrixInverse}
