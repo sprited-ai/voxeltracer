@@ -8,9 +8,9 @@ const float EPSILON = 0.0001;
 /**
  * Cast Shadow
  */
-float castShadow(vec3 pos, Model models[8], int modelCount, vec3 lightDir) {
+float castShadow(vec3 pos, Model models[8], vec3 lightDir) {
     Ray ray = Ray(pos + lightDir * EPSILON, lightDir);
-    Hit hit = intersectModels(ray, models, modelCount);
+    Hit hit = intersectModels(ray, models);
     if (hit.didHit) {
         return 0.0;
     }

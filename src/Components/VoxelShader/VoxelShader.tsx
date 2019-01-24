@@ -42,8 +42,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     progress,
     viewMatrixInverse,
     projectionMatrixInverse,
-    models: getModelHashes(models),
-    modelCount: models.length
+    models: getModelHashes(models)
   };
   const uniformsOptions: any = {};
   for (let i = 0; i < MAX_MODELS; ++i) {

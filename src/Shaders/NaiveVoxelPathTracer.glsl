@@ -14,7 +14,7 @@ uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;
 uniform Model models[8];
-uniform int modelCount;
+// uniform int modelCount;
 // uniform sampler2D modelTexture1;
 // uniform ivec3 modelPos;
 // uniform ivec3 modelSize;
@@ -48,7 +48,7 @@ void main() {
   // float n = random(uv);
   // gl_FragColor = vec4(vec3(n) + rand, 1.0);
 
-  Hit hit = intersectModels(ray, models, modelCount);
+  Hit hit = intersectModels(ray, models);
 
   vec3 lightDir = normalize(vec3(-1.1, 1.9, -1.7));
 
@@ -58,7 +58,7 @@ void main() {
     // gl_FragColor = vec4(hit.t * vec3(0.1), 1.0); return;
 
     // Shadow ray
-    float shadowMultiplier = castShadow(hit.pos, models, modelCount, lightDir);
+    float shadowMultiplier = castShadow(hit.pos, models, lightDir);
 
     vec3 color = vec3(1.0);
     float lightMultiplier = max(dot(hit.normal, lightDir), 0.0);
