@@ -13,8 +13,9 @@ varying vec2 uv;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;
-uniform Model models[1];
-// uniform sampler2D modelTextures[1];
+uniform Model models[8];
+uniform int modelCount;
+// uniform sampler2D modelTexture1;
 // uniform ivec3 modelPos;
 // uniform ivec3 modelSize;
 // uniform ivec2 modelTextureSize;
@@ -31,15 +32,13 @@ void main() {
   // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
 
   // // Debug texture.
-  // vec4 texelValue = texture2D(modelTexture, uv);
+  // vec4 texelValue = texture2D(modelTexture1, uv);
   // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
-
-  // Model model = models[0];
 
   // Test
   // gl_FragColor = vec4(float(model.textureSize.x) / 10.0, 0.0, 0.0, 1.0); return;
 
-  Model model = Model(0, ivec3(-2, -2, -2), ivec3(4, 4, 4), ivec2(4, 4));
+  Model model = models[1];
 
   Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, uv);
 

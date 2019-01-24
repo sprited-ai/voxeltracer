@@ -32,20 +32,21 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     progress,
     viewMatrixInverse,
     projectionMatrixInverse,
-    models: modelHashes
+    models: modelHashes,
+    modelCount: models.length
   };
+  const uniformsOptions: any = {};
   models.forEach((model, index) => {
     uniforms[`modelTexture${index}`] = model.texture;
+    uniformsOptions[`modelTexture${index}`] = {
+      interpolation: 'nearest'
+    };
   });
   return (
     <Node
       shader={shaders.vt01}
       uniforms={uniforms}
-      uniformsOptions={{
-        modelTexture0: {
-          interpolation: 'nearest'
-        }
-      }}
+      uniformsOptions={uniformsOptions}
     />
   );
 }

@@ -29,7 +29,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     super(props);
     this.scene = new Scene();
     this.camera = new PerspectiveCamera(45, 1, 0.01, 1000);
-    this.camera.position.set(0, 0, 10);
+    this.camera.position.set(0, 0, 20);
     this.camera.lookAt(new Vector3(0, 0, 0));
 
     const models = [];
@@ -37,7 +37,13 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // Sample model.
     models.push(
       new VoxelArt(
-        new Vector3(-2, -2, -2),
+        new Vector3(0, -2, -2),
+        new Vector3(4, 4, 4)
+      )
+    );
+    models.push(
+      new VoxelArt(
+        new Vector3(-4, -2, -2),
         new Vector3(4, 4, 4)
       )
     );
