@@ -85,16 +85,16 @@ Hit intersectModel(Ray ray, Model model) {
     else if (all(greaterThanEqual(cellIndex, ivec3(0))) && all(lessThan(cellIndex, ivec3(model.size)))) {
 
       // Check voxel
-      int paletteIndex = voxelAt(model, cellIndex);
+      int materialIndex = voxelAt(model, cellIndex);
 
       // Hit
-      if (paletteIndex > 0) {
+      if (materialIndex > 0) {
         vec3 voxMin = vec3(cellIndex + model.pos);
         vec3 voxMax = voxMin + 1.0;
         vec2 tVox = intersectBoundingBox(ray, voxMin, voxMax);
         float hitT = tVox.x;
         vec3 hitPos = ray.origin + ray.dir * hitT;
-        return Hit(true, hitT, hitPos, hitNormal, paletteIndex);
+        return Hit(true, hitT, hitPos, hitNormal, materialIndex);
       }
     }
   }

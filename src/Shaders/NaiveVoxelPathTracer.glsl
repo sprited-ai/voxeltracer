@@ -4,16 +4,18 @@ precision highp sampler2D;
 #pragma glslify: Model = require('./Structs/Model')
 #pragma glslify: Ray = require('./Structs/Ray')
 #pragma glslify: Hit = require('./Structs/Hit')
+#pragma glslify: Material = require('./Structs/Material')
 #pragma glslify: castRay = require('./Functions/castRay')
+#pragma glslify: getMaterial = require('./Functions/getMaterial')
 #pragma glslify: castShadow = require('./Functions/castShadow')
 #pragma glslify: intersectModels = require('./Functions/intersectModels')
 
-uniform sampler2D paletteTexture;
 varying vec2 uv;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;
 uniform Model models[8];
+// uniform sampler2D colorPaletteTexture;
 // uniform int modelCount;
 // uniform sampler2D modelTexture1;
 // uniform ivec3 modelPos;
@@ -60,10 +62,14 @@ void main() {
     // Shadow ray
     float shadowMultiplier = castShadow(hit.pos, models, lightDir);
 
-    vec3 color = vec3(1.0);
+    // Material look up
+    int materialIndex = hit.materialIndex;
+    Material material = getMaterial(materialIndex);
+    vec3 color = material.color.rgb;
     float lightMultiplier = max(dot(hit.normal, lightDir), 0.0);
     float ambience = 0.2;
-    gl_FragColor.rgb = (1.0 - ambience) * color * shadowMultiplier * lightMultiplier + ambience;
+    float intensity = (1.0 - ambience) * shadowMultiplier * lightMultiplier + ambience;
+    gl_FragColor.rgb = color * intensity;
     gl_FragColor.a = 1.0;
   }
   else {

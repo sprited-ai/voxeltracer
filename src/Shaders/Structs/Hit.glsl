@@ -3,7 +3,7 @@ struct Hit {
   float t;
   vec3 pos;
   vec3 normal;
-  int paletteIndex;
+  int materialIndex;
 };
 
 #pragma glslify: export(Hit)
