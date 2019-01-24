@@ -29,7 +29,8 @@ export default class VoxelArt {
     const textureData = new Uint8Array(width * width * 4);
 
     for (let i = 0; i < width * width * 4; ++i) {
-      textureData[i] = Math.random() > 0.5 ? 255 : 0;
+      const randomIndex = Math.floor(Math.random() * 255);
+      textureData[i] = Math.random() > 0.5 ? randomIndex  : 0;
     }
 
     this.texture = ndarray(textureData, [width, width, 4]);
