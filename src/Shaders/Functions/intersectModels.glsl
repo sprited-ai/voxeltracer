@@ -12,7 +12,7 @@ Hit intersectModels(Ray ray, Model models[8]) {
   Hit nearestHit = miss;
   for (int i = 0; i < 8; ++i) {
     Model model = models[i];
-    if (model.index == -1) break;
+    if (model.index == -1) continue;
     Hit hit = intersectModel(ray, models[i]);
     if (hit.didHit) {
       if (!nearestHit.didHit || hit.t < nearestHit.t) {
