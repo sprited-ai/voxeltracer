@@ -89,7 +89,9 @@ export default class MagicaVoxelContext extends Context {
 
     const mainChunk = this.decodeChunk(buffer, 8);
 
+    // @TODO construct models.
     debugger;
+
     console.log(mainChunk);
 
     return new VoxelScene(models, materials);
