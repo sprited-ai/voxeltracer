@@ -1,12 +1,13 @@
 import React from "react";
 import * as THREE from 'three';
-import { Scene, PerspectiveCamera, Vector4, Vector3 } from "three";
+import { PerspectiveCamera, Vector3 } from "three";
 import { Surface } from "gl-react-dom";
 import VoxelShader from '../VoxelShader/VoxelShader';
 import ReactAnimationFrame from 'react-animation-frame';
 import VoxelArt from "../../Data/Models/VoxelArt";
-import Material from "../../Data/Models/Material";
 import MaterialArray from "../../Data/Arrays/MaterialArray";
+import VoxelScene from "../../Data/Models/VoxelScene";
+import Loader from "../../Data/Loaders/Loader";
 
 const OrbitControls = require('three-orbit-controls')(THREE);
 
@@ -24,45 +25,51 @@ interface VoxelViewerState {
 }
 
 class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
-  scene: Scene;
+  // scene: Scene;
+  scene: VoxelScene;
   camera: PerspectiveCamera;
   orbitControls?: OrbitControls;
+  loader: Loader;
 
   constructor(props: VoxelViewerProps) {
     super(props);
-    this.scene = new Scene();
+    // this.scene = new Scene();
     this.camera = new PerspectiveCamera(45, 1, 0.01, 1000);
     this.camera.position.set(0, 0, 20);
     this.camera.lookAt(new Vector3(0, 0, 0));
 
-    const models = [];
-
-    // Sample model.
-    models.push(
-      new VoxelArt(
-        new Vector3(0, -2, -2),
-        new Vector3(4, 4, 4)
-      )
-    );
-    models.push(
-      new VoxelArt(
-        new Vector3(-4, -2, -2),
-        new Vector3(4, 4, 4)
-      )
-    );
-
-    // Materials
-    const materials: MaterialArray = new MaterialArray();
+    this.loader = new Loader();
+    this.scene = new VoxelScene();
+    // // Sample model.
+    // models.push(
+    //   new VoxelArt(
+    //     new Vector3(0, -2, -2),
+    //     new Vector3(4, 4, 4)
+    //   )
+    // );
+    // models.push(
+    //   new VoxelArt(
+    //     new Vector3(-4, -2, -2),
+    //     new Vector3(4, 4, 4)
+    //   )
+    // );
 
     this.state = {
-      models,
-      materials,
+      models: this.scene.models,
+      materials: this.scene.materials,
       progress: 0,
       eye: this.camera.position.toArray(),
       viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
       projectionMatrixInverse: this.camera.projectionMatrixInverse.elements
     };
+  }
+
+  sceneDidChange(): void {
+    this.setState({
+      models: this.scene.models,
+      materials: this.scene.materials
+    });
   }
 
   startAnimation(): void {
@@ -97,6 +104,12 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   componentDidMount() {
     const orbitControls: OrbitControls = this.orbitControls = new OrbitControls(this.camera);
     orbitControls.addEventListener('change', this.didOrbit);
+
+    // Load deafult model.
+    this.loader.loadUrl('vox/pink_mini_store_v02.vox').then((scene: VoxelScene) => {
+      this.scene = scene;
+      this.sceneDidChange();
+    });
   }
 
   componentWillUnmount() {
