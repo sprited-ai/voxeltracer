@@ -3,8 +3,8 @@ import VoxelArt from "../Models/VoxelArt";
 import Material from "../Models/Material";
 import MaterialArray from "../Arrays/MaterialArray";
 import Context from "./Context";
-import { readFloat, readInt, readStr, readUint, uint8, uint32 } from "./ByteUtil";
-import MaterialType from "../../Enums/MaterialType";
+import { readInt, readStr, uint8 } from "./ByteUtil";
+import { Vector3 } from "three";
 
 class Chunk {
   size: number = 0;
@@ -89,8 +89,42 @@ export default class MagicaVoxelContext extends Context {
 
     const mainChunk = this.decodeChunk(buffer, 8);
 
-    // @TODO construct models.
-    debugger;
+    if (!(mainChunk instanceof MainChunk)) {
+      throw 'Expected main chunk.';
+    }
+
+    // Single frame is supported.
+    let sizeChunk: SizeChunk | null = null;
+    for (let i = 0; i < mainChunk.children.length; ++i) {
+      const chunk = mainChunk.children[i];
+      if (chunk instanceof PackChunk) {
+        // ignore, since we support single frame only.
+      }
+      else if(chunk instanceof SizeChunk) {
+        sizeChunk = chunk;
+      }
+      else if(chunk instanceof XyziChunk) {
+        if (!sizeChunk) {
+          throw 'Missing size chunk.';
+        }
+        const pos = new Vector3(0, 0, 0);
+        const size = new Vector3(sizeChunk.x, sizeChunk.y, sizeChunk.z);
+        const model = new VoxelArt(pos, size);
+        const { xyzis } = chunk;
+        const voxelCount = xyzis.length / 4;
+        for (let t = 0; t < voxelCount; ++t) {
+          const offset = t * 4;
+          // TODO: Z here is gravity direction. Needs to fix this.
+          const x = xyzis[offset + 0];
+          const y = xyzis[offset + 1];
+          const z = xyzis[offset + 2];
+          const i = xyzis[offset + 3];
+          model.setVoxel(x, y, z, i);
+        }
+        models.push(model);
+        sizeChunk = null;
+      }
+    }
 
     console.log(mainChunk);
 
@@ -104,9 +138,10 @@ export default class MagicaVoxelContext extends Context {
     const numBytesOfChildrenChunks = readInt(buffer, chunkStart + 8);
     const contentStart = chunkStart + 12;
     const childrenStart = contentStart + numBytesOfChunkContent;
-    var chunkSize = 12 + numBytesOfChunkContent + numBytesOfChildrenChunks;
-
+    const chunkSize = 12 + numBytesOfChunkContent + numBytesOfChildrenChunks;
     let chunk: Chunk;
+
+    console.log(`Decoding ${chunkId} chunk at ${chunkStart} byte offset (size: ${chunkSize}bytes)`);
 
     if (chunkId === 'MAIN') {
       const children: Chunk[] = [];
@@ -144,7 +179,7 @@ export default class MagicaVoxelContext extends Context {
       chunk = new MattChunk();
     }
     else {
-      console.warn(`Unsupported chunk type "${chunkId}"`);
+      console.warn(`Skipping unsupported chunk type "${chunkId}"`);
       chunk = new UnsupportedChunk();
     }
 

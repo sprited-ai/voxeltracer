@@ -106,10 +106,13 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     orbitControls.addEventListener('change', this.didOrbit);
 
     // Load deafult model.
-    this.loader.loadUrl('vox/pink_mini_store_v02.vox').then((scene: VoxelScene) => {
+    this.loader.loadUrl('vox/pink_mini_store.vox').then((scene: VoxelScene) => {
       this.scene = scene;
       this.sceneDidChange();
     });
+
+    // Test other files
+    // this.loader.loadUrl('vox/3x3x3.vox');
   }
 
   componentWillUnmount() {
