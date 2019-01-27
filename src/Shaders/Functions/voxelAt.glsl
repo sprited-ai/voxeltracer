@@ -19,33 +19,34 @@ int voxelAt(Model model, ivec3 cellIndex) {
   ivec2 slatePos = slate * model.size.xz;
   ivec2 texelPos = slatePos + cellIndex.xz;
   vec2 uv = (vec2(texelPos) + 0.5) / vec2(model.textureSize);
+  vec2 flippedUV = vec2(uv.x, 1.0 - uv.y);
   vec4 slateValue;
   float value;
 
   // Select the right texture
   if (model.index == 0) {
-    slateValue = texture2D(modelTexture0, uv);
+    slateValue = texture2D(modelTexture0, flippedUV);
   }
   else if (model.index == 1) {
-    slateValue = texture2D(modelTexture1, uv);
+    slateValue = texture2D(modelTexture1, flippedUV);
   }
   else if (model.index == 2) {
-    slateValue = texture2D(modelTexture2, uv);
+    slateValue = texture2D(modelTexture2, flippedUV);
   }
   else if (model.index == 3) {
-    slateValue = texture2D(modelTexture3, uv);
+    slateValue = texture2D(modelTexture3, flippedUV);
   }
   else if (model.index == 4) {
-    slateValue = texture2D(modelTexture4, uv);
+    slateValue = texture2D(modelTexture4, flippedUV);
   }
   else if (model.index == 5) {
-    slateValue = texture2D(modelTexture5, uv);
+    slateValue = texture2D(modelTexture5, flippedUV);
   }
   else if (model.index == 6) {
-    slateValue = texture2D(modelTexture6, uv);
+    slateValue = texture2D(modelTexture6, flippedUV);
   }
   else {
-    slateValue = texture2D(modelTexture7, uv);
+    slateValue = texture2D(modelTexture7, flippedUV);
   }
 
   // Select the right slice

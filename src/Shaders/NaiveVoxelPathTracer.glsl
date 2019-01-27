@@ -17,7 +17,7 @@ uniform vec3 eye;
 uniform Model models[8];
 // uniform sampler2D colorPaletteTexture;
 // uniform int modelCount;
-// uniform sampler2D modelTexture1;
+// uniform sampler2D modelTexture0;
 // uniform ivec3 modelPos;
 // uniform ivec3 modelSize;
 // uniform ivec2 modelTextureSize;
@@ -33,9 +33,20 @@ void main() {
   // vec4 texelValue = texture2D(someData[0].tex, uv);
   // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
 
-  // // Debug texture.
-  // vec4 texelValue = texture2D(modelTexture1, uv);
-  // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
+  // Debug UV
+  // gl_FragColor = vec4(uv, 0.0, 1.0); return;
+
+
+  // // Debug voxel texture.
+  // vec4 texelValue = texture2D(modelTexture0, vec2(uv.x, 1.0 - uv.y));
+  // gl_FragColor = vec4(
+  //     vec3(
+  //       (texelValue.r > 0.0 ? 1.0 : 0.0) +
+  //       (texelValue.g > 0.0 ? 1.0 : 0.0) +
+  //       (texelValue.b > 0.0 ? 1.0 : 0.0) +
+  //       (texelValue.a > 0.0 ? 1.0 : 0.0)
+  //     ) / 4.0
+  // , 1.0); return;
 
   // Test
   // gl_FragColor = vec4(float(model.textureSize.x) / 10.0, 0.0, 0.0, 1.0); return;
