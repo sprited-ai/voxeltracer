@@ -2,8 +2,8 @@ import React from "react";
 import { Shaders, Node, GLSL, Uniform } from "gl-react";
 import NaiveVoxelPathTracer from '../../Shaders/NaiveVoxelPathTracer.glsl';
 import VoxelArt from '../../Data/Models/VoxelArt';
-import Material from "../../Data/Models/Material";
 import MaterialArray from "../../Data/Arrays/MaterialArray";
+import ndarray from 'ndarray';
 
 export const MAX_MODELS = 8;
 
@@ -55,12 +55,11 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
   };
   for (let i = 0; i < MAX_MODELS; ++i) {
     const model = models[i];
-    if (model) {
-      uniforms[`modelTexture${i}`] = model.texture;
-      uniformsOptions[`modelTexture${i}`] = {
-        interpolation: 'nearest'
-      };
-    }
+    let texture = model ? model.texture : ndarray(new Uint8Array(4), [1, 1, 4]);
+    uniforms[`modelTexture${i}`] = texture;
+    uniformsOptions[`modelTexture${i}`] = {
+      interpolation: 'nearest'
+    };
   }
 
   return (
