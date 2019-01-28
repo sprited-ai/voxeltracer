@@ -16,6 +16,7 @@ uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;
 uniform Model models[8];
 // uniform sampler2D colorPaletteTexture;
+// uniform sampler2D materialColorTexture;
 // uniform int modelCount;
 // uniform sampler2D modelTexture0;
 // uniform ivec3 modelPos;
@@ -36,6 +37,9 @@ void main() {
   // Debug UV
   // gl_FragColor = vec4(uv, 0.0, 1.0); return;
 
+  // Color texture test
+  // vec4 texelValue = texture2D(materialColorTexture, uv);
+  // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
 
   // // Debug voxel texture.
   // vec4 texelValue = texture2D(modelTexture0, vec2(uv.x, 1.0 - uv.y));

@@ -12,7 +12,8 @@ Material getMaterial(int index) {
       index / 16
     );
     vec2 uv = (vec2(pos) + 0.5) / 16.0;
-    vec4 color = texture2D(materialColorTexture, uv);
+    vec2 flippedUV = vec2(uv.x, 1.0 - uv.y);
+    vec4 color = texture2D(materialColorTexture, flippedUV);
     return Material(color);
 }
 

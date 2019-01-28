@@ -4,7 +4,7 @@ import Material from "../Models/Material";
 import MaterialArray from "../Arrays/MaterialArray";
 import Context from "./Context";
 import { readInt, readStr, uint8 } from "./ByteUtil";
-import { Vector3, Matrix4 } from "three";
+import { Vector3, Matrix4, Vector4 } from "three";
 
 class Chunk {
   size: number = 0;
@@ -146,6 +146,20 @@ export default class MagicaVoxelContext extends Context {
         models.push(model);
         sizeChunk = null;
       }
+      else if(chunk instanceof RgbaChunk) {
+        const { rgbas } = chunk;
+        // Map 0-254 to 1-255
+        for (let i = 0; i < 255; ++i) {
+          const offset = i * 4;
+          const r = rgbas[offset + 0];
+          const g = rgbas[offset + 1];
+          const b = rgbas[offset + 2];
+          const a = rgbas[offset + 3];
+          const color = new Vector4(r, g, b, a);
+          materials.applyAt(i + 1, { color });
+        }
+      }
+
     }
 
     console.log(mainChunk);
