@@ -1,6 +1,6 @@
 import React from "react";
 import * as THREE from 'three';
-import { PerspectiveCamera, Vector3 } from "three";
+import { PerspectiveCamera, Vector3, Vector2 } from "three";
 import { Surface } from "gl-react-dom";
 import VoxelShader from '../VoxelShader/VoxelShader';
 import ReactAnimationFrame from 'react-animation-frame';
@@ -9,6 +9,7 @@ import MaterialArray from "../../Data/Arrays/MaterialArray";
 import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
 
+const MAX_TICK = 100;
 const OrbitControls = require('three-orbit-controls')(THREE);
 
 interface OrbitControls extends THREE.OrbitControls {}
@@ -16,12 +17,13 @@ interface OrbitControls extends THREE.OrbitControls {}
 interface VoxelViewerProps { }
 
 interface VoxelViewerState {
-  progress: number;
+  tick: number;
   eye: number[];
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
   models: VoxelArt[];
   materials: MaterialArray;
+  viewportSize: Vector2;
 }
 
 class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
@@ -54,10 +56,12 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     //   )
     // );
 
+    const viewportSize = new Vector2(512, 512);
     this.state = {
       models: this.scene.models,
       materials: this.scene.materials,
-      progress: 0,
+      tick: 0,
+      viewportSize,
       eye: this.camera.position.toArray(),
       viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
@@ -92,7 +96,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     this.camera.lookAt(new Vector3(0, 0, 0));
 
     this.setState({
-      progress: 0,
+      tick: 0,
       eye: this.camera.position.toArray(),
       viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
@@ -126,9 +130,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 
   onAnimationFrame(time: number) {
-    const { progress } = this.state;
-    this.setState({ progress: progress + 0.1 });
-    if (progress >= 1) {
+    const { tick } = this.state;
+    this.setState({ tick: tick + 1 });
+    if (tick > MAX_TICK) {
       this.endAnimation();
     }
   }
@@ -140,18 +144,29 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // const projectionMatrixInverse: Matrix4 = this.camera.projectionMatrixInverse;
 
     // Render with minimum pixel ratio of 2.
-    const pixelRatio = Math.max(window.devicePixelRatio || 1, 2);
-
+    const pixelRatio = Math.max(window.devicePixelRatio || 1, 1);
+    const { viewportSize } = this.state;
+    const resolution = [
+      pixelRatio * viewportSize.x,
+      pixelRatio * viewportSize.y
+    ];
     return (
       // Matrix4 invertedModelViewProjectionMatrix =
       // (_camera.projectionMatrix * _camera.viewMatrix * _modelMatrix).inverted();
 
       // @ts-ignore
-      <Surface width={300} height={300} pixelRatio={pixelRatio}>
+      <Surface
+        width={viewportSize.x}
+        height={viewportSize.y}
+        pixelRatio={pixelRatio}
+        // webglContextAttributes={{ preserveDrawingBuffer: true }}
+      >
         <VoxelShader
           models={this.state.models}
           materials={this.state.materials}
-          progress={this.state.progress}
+          tick={this.state.tick}
+          maxTick={MAX_TICK}
+          resolution={resolution}
           eye={this.state.eye}
           viewMatrixInverse={this.state.viewMatrixInverse}
           projectionMatrixInverse={this.state.projectionMatrixInverse}

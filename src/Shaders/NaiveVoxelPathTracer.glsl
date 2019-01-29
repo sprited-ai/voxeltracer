@@ -15,6 +15,7 @@ uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;
 uniform Model models[8];
+uniform sampler2D previousFrameBuffer;
 // uniform sampler2D colorPaletteTexture;
 // uniform sampler2D materialColorTexture;
 // uniform int modelCount;
@@ -22,13 +23,35 @@ uniform Model models[8];
 // uniform ivec3 modelPos;
 // uniform ivec3 modelSize;
 // uniform ivec2 modelTextureSize;
-uniform float progress;
+uniform int tick;
+uniform int maxTick;
+uniform vec2 resolution;
 
 // #pragma glslify: random = require('./Functions/random')
 
 const float EPSILON = 0.0001;
 
+const int subPixelSideCount = 2;
+
 void main() {
+
+  // TODO: Does this work???
+  int subPixelCount = subPixelSideCount * subPixelSideCount;
+  int subPixelIndex = tick / subPixelCount;
+  ivec2 subPixelIJ = ivec2(
+    mod(subPixelIndex, subPixelSideCount),
+    subPixelIndex / subPixelSideCount
+  );
+  vec2 subPixelLocalUV = (vec2(subPixelIJ) + 0.5) / float(subPixelCount);
+  vec2 pixelPortion = 1.0 / vec2(resolution);
+  vec2 subPixelUVOffset = pixelPortion * (subPixelLocalUV - 0.5);
+  vec2 subPixelUV = uv + subPixelUVOffset;
+
+  float progress = clamp(float(tick) / float(maxTick), 0.0, 1.0);
+
+
+  // test
+  subPixelUV = uv;
 
   // gl_FragColor = vec4(someData[0].colors[0].rgb, 1.0); return;
   // vec4 texelValue = texture2D(someData[0].tex, uv);
@@ -57,6 +80,8 @@ void main() {
 
   // Model model = models[1];
 
+
+
   Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, uv);
 
   // float seed = progress;
@@ -68,7 +93,7 @@ void main() {
   Hit hit = intersectModels(ray, models);
 
   vec3 lightDir = normalize(vec3(-1.1, 1.9, -1.7));
-
+  vec4 computedColor;
   if (hit.didHit) {
 
     // test depth.
@@ -84,10 +109,19 @@ void main() {
     float lightMultiplier = max(dot(hit.normal, lightDir), 0.0);
     float ambience = 0.2;
     float intensity = (1.0 - ambience) * shadowMultiplier * lightMultiplier + ambience;
-    gl_FragColor.rgb = color * intensity;
-    gl_FragColor.a = 1.0;
+    computedColor.rgb = color * intensity;
+    computedColor.a = 1.0;
   }
   else {
-    gl_FragColor = projectionMatrixInverse * vec4(ray.dir, 1.0);
+    computedColor.rgb = (projectionMatrixInverse * vec4(ray.dir, 1.0)).rgb;
+    computedColor.a = 1.0;
+  }
+
+  vec4 previousColor = texture2D(previousFrameBuffer, uv);
+  if (tick == 0) {
+    gl_FragColor = computedColor;
+  }
+  else {
+    gl_FragColor = mix(previousColor, computedColor, progress);
   }
 }

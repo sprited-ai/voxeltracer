@@ -1,5 +1,5 @@
 import React from "react";
-import { Shaders, Node, GLSL, Uniform } from "gl-react";
+import { Shaders, Node, GLSL, Uniform, NearestCopy } from "gl-react";
 import NaiveVoxelPathTracer from '../../Shaders/NaiveVoxelPathTracer.glsl';
 import VoxelArt from '../../Data/Models/VoxelArt';
 import MaterialArray from "../../Data/Arrays/MaterialArray";
@@ -11,7 +11,9 @@ interface VoxelShaderProps {
   eye: number[];
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
-  progress: number;
+  tick: number;
+  maxTick: number;
+  resolution: number[];
   models: VoxelArt[];
   materials: MaterialArray;
 }
@@ -39,17 +41,23 @@ const getModelHashes = function (models: VoxelArt[]): any[] {
 };
 
 const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
-  const { eye, viewMatrixInverse, projectionMatrixInverse, progress, models, materials } = props;
+  const { resolution, eye, viewMatrixInverse, projectionMatrixInverse, tick, maxTick, models, materials } = props;
   const uniforms: any = {
     eye,
-    progress,
+    tick,
+    maxTick,
     viewMatrixInverse,
+    resolution,
     projectionMatrixInverse,
     models: getModelHashes(models),
-    materialColorTexture: materials.colorTexture
+    materialColorTexture: materials.colorTexture,
+    previousFrameBuffer: Uniform.Backbuffer
   };
   const uniformsOptions: any = {
     materialColorTexture: {
+      interpolation: 'nearest'
+    },
+    previousFrameBuffer: {
       interpolation: 'nearest'
     }
   };
@@ -61,14 +69,16 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
       interpolation: 'nearest'
     };
   }
-
   return (
-    <Node
-      shader={shaders.vt01}
-      uniforms={uniforms}
-      uniformsOptions={uniformsOptions}
-      ignoreUnusedUniforms={true}
-    />
+    <NearestCopy>
+      <Node
+        shader={shaders.vt01}
+        uniforms={uniforms}
+        uniformsOptions={uniformsOptions}
+        ignoreUnusedUniforms={true}
+        backbuffering
+      />
+    </NearestCopy>
   );
 }
 
