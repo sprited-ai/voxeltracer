@@ -9,13 +9,14 @@ precision highp sampler2D;
 #pragma glslify: getMaterial = require('./Functions/getMaterial')
 #pragma glslify: castShadow = require('./Functions/castShadow')
 #pragma glslify: intersectModels = require('./Functions/intersectModels')
+#pragma glslify: getPreviousColor = require('./Functions/getPreviousColor')
 
 varying vec2 uv;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;
 uniform Model models[8];
-uniform sampler2D previousFrameBuffer;
+// uniform sampler2D previousFrameBuffer;
 // uniform sampler2D colorPaletteTexture;
 // uniform sampler2D materialColorTexture;
 // uniform int modelCount;
@@ -80,8 +81,6 @@ void main() {
 
   // Model model = models[1];
 
-
-
   Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, uv);
 
   // float seed = progress;
@@ -101,7 +100,7 @@ void main() {
 
     // Shadow ray
     float shadowMultiplier;
-    if (tick < 10) {
+    if (tick < 3) {
       // TODO: Use shadow map for first few
       shadowMultiplier = 1.0;
     } else {
@@ -123,11 +122,16 @@ void main() {
     computedColor.a = 1.0;
   }
 
-  vec4 previousColor = texture2D(previousFrameBuffer, uv);
+  vec4 finalColor;
   if (tick == 0) {
-    gl_FragColor = computedColor;
+    finalColor = computedColor;
   }
   else {
-    gl_FragColor = mix(previousColor, computedColor, progress);
+    vec4 previousColor = getPreviousColor(uv);
+    finalColor = mix(previousColor, computedColor, progress);
   }
+
+  gl_FragColor = finalColor;
 }
+
+

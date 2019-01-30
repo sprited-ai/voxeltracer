@@ -26,7 +26,7 @@ export default class MaterialArray {
       mat.color = color;
       const i = index % 16;
       const j = Math.floor(index / 16);
-      console.log(`Material Array - ${index} => ${i},${j}: ${color.x},${color.y},${color.z},${color.w}`);
+      // console.log(`Material Array - ${index} => ${i},${j}: ${color.x},${color.y},${color.z},${color.w}`);
 
       this._colorTexture.set(i, j, 0, color.x);
       this._colorTexture.set(i, j, 1, color.y);

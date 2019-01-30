@@ -70,10 +70,13 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 
   sceneDidChange(): void {
+    this.endAnimation();
     this.setState({
       models: this.scene.models,
-      materials: this.scene.materials
+      materials: this.scene.materials,
+      tick: 0
     });
+    this.startAnimation();
   }
 
   startAnimation(): void {
