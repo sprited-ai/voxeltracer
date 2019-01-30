@@ -100,7 +100,13 @@ void main() {
     // gl_FragColor = vec4(hit.t * vec3(0.1), 1.0); return;
 
     // Shadow ray
-    float shadowMultiplier = castShadow(hit.pos, models, lightDir);
+    float shadowMultiplier;
+    if (tick < 10) {
+      // TODO: Use shadow map for first few
+      shadowMultiplier = 1.0;
+    } else {
+      shadowMultiplier = castShadow(hit.pos, models, lightDir);
+    }
 
     // Material look up
     int materialIndex = hit.materialIndex;

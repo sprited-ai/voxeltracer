@@ -9,7 +9,7 @@ import MaterialArray from "../../Data/Arrays/MaterialArray";
 import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
 
-const MAX_TICK = 100;
+const MAX_TICK = 500;
 const OrbitControls = require('three-orbit-controls')(THREE);
 
 interface OrbitControls extends THREE.OrbitControls {}
