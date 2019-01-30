@@ -9,7 +9,7 @@ import MaterialArray from "../../Data/Arrays/MaterialArray";
 import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
 
-const MAX_TICK = 500;
+const MAX_TICK = 50;
 const OrbitControls = require('three-orbit-controls')(THREE);
 
 interface OrbitControls extends THREE.OrbitControls {}
@@ -136,6 +136,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     const { tick } = this.state;
     this.setState({ tick: tick + 1 });
     if (tick > MAX_TICK) {
+      console.log('Render completed.');
       this.endAnimation();
     }
   }
