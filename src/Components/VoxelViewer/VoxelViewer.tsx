@@ -9,7 +9,7 @@ import MaterialArray from "../../Data/Arrays/MaterialArray";
 import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
 
-const MAX_TICK = 50;
+const MAX_TICK = 256;
 const OrbitControls = require('three-orbit-controls')(THREE);
 
 interface OrbitControls extends THREE.OrbitControls {}
@@ -148,7 +148,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // const projectionMatrixInverse: Matrix4 = this.camera.projectionMatrixInverse;
 
     // Render with minimum pixel ratio of 2.
-    const pixelRatio = Math.max(window.devicePixelRatio || 1, 1);
+    const pixelRatio = window.devicePixelRatio || 1;
     const { viewportSize } = this.state;
     const resolution = [
       pixelRatio * viewportSize.x,
