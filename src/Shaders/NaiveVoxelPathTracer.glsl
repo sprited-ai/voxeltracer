@@ -145,4 +145,33 @@ void main() {
   gl_FragColor = finalColor;
 }
 
+// vec3 accumulatedColor = vec3(0.0);
+// vec3 colorMask = vec3(1.0);
+// for (int jt = 0; jt < BOUNCE_LIMIT; ++jt) {
+//     float hitT;
+//     vec3 hitPoint;
+//     vec3 normal;
+//     int paletteIndex;
+//     // Intersect
+//     if (!intersectVoxels(ray, hitT, hitPoint, paletteIndex, normal)) {
+//         break;
+//     }
+//     // Trace shadow
+//     float shadowMultiplier = traceShadow(hitPoint);
+//     // Compute Palette UV
+//     vec2 uvPalette = vec2(
+//         (mod(float(paletteIndex), 16.0) + 0.5) / 16.0,
+//         (float(paletteIndex / 16) + 0.5) / 16.0
+//     );
+//     // Compute color
+//     float diffuseAmount = max(0.0, dot(normalize(lightDirection), normal));
+//     vec4 paletteValue = texture(paletteTexture, uvPalette);
+//     vec3 surfaceColor = paletteValue.rgb;
+//     colorMask *= surfaceColor;
+//     accumulatedColor += colorMask * (diffuseAmount * shadowMultiplier);
+//     float seed = timeSinceStart + float(jt);
+//     ray.dir = cosineWeightedDirection(seed, normal);
+//     ray.origin = hitPoint + ray.dir * EPSILON;
+// }
+
 
