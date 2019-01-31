@@ -4,11 +4,13 @@ import NaiveVoxelPathTracer from '../../Shaders/NaiveVoxelPathTracer.glsl';
 import VoxelArt from '../../Data/Models/VoxelArt';
 import MaterialArray from "../../Data/Arrays/MaterialArray";
 import ndarray from 'ndarray';
+import { Vector3 } from "three";
 
 export const MAX_MODELS = 8;
 
 interface VoxelShaderProps {
   eye: number[];
+  lightDir: Vector3;
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
   tick: number;
@@ -41,13 +43,14 @@ const getModelHashes = function (models: VoxelArt[]): any[] {
 };
 
 const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
-  const { resolution, eye, viewMatrixInverse, projectionMatrixInverse, tick, maxTick, models, materials } = props;
+  const { resolution, eye, viewMatrixInverse, projectionMatrixInverse, tick, maxTick, models, materials, lightDir } = props;
   const uniforms: any = {
     eye,
     tick,
     maxTick,
     viewMatrixInverse,
     resolution,
+    lightDir: lightDir.toArray(),
     projectionMatrixInverse,
     models: getModelHashes(models),
     materialColorTexture: materials.colorTexture,
