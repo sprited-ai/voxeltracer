@@ -8,14 +8,16 @@ precision highp sampler2D;
 #pragma glslify: castRay = require('./Functions/castRay')
 #pragma glslify: getMaterial = require('./Functions/getMaterial')
 #pragma glslify: castShadow = require('./Functions/castShadow')
-#pragma glslify: zitterUV = require('./Functions/zitterUV')
+#pragma glslify: jitterUV = require('./Functions/jitterUV')
+#pragma glslify: jitterLightDir = require('./Functions/jitterLightDir')
 #pragma glslify: intersectModels = require('./Functions/intersectModels')
 #pragma glslify: getPreviousColor = require('./Functions/getPreviousColor')
 
 varying vec2 uv;
+uniform vec3 eye;
+uniform vec3 lightDir;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
-uniform vec3 eye;
 uniform Model models[8];
 // uniform sampler2D previousFrameBuffer;
 // uniform sampler2D colorPaletteTexture;
@@ -85,11 +87,18 @@ void main() {
 
   // Model model = models[1];
 
+  float normalizedSeed = float(tick) / float(maxTick);
+
+  // Light direction normalization & zittering
+  vec3 normalizedLightDir = normalize(lightDir);
+  vec3 jitteredLightDir = jitterLightDir(normalizedLightDir, 0.314, normalizedSeed);
+
+
   // Anti-aliasing
-  vec2 zitteredUV = zitterUV(uv, tick, resolution);
+  vec2 jitteredUV = jitterUV(uv, tick, resolution);
 
   // Initial ray
-  Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, zitteredUV);
+  Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, jitteredUV);
 
   // float seed = progress;
   // float rand = random(vec3(12.9898, 78.233, 151.7182), seed);
@@ -99,7 +108,7 @@ void main() {
 
   Hit hit = intersectModels(ray, models);
 
-  vec3 lightDir = normalize(vec3(-1.1, 1.9, -1.7));
+  // vec3 lightDir = normalize(vec3(-1.1, 1.9, -1.7));
   vec4 computedColor;
   if (hit.didHit) {
 
@@ -112,14 +121,14 @@ void main() {
       // TODO: Use shadow map for first few
       shadowMultiplier = 1.0;
     } else {
-      shadowMultiplier = castShadow(hit.pos, models, lightDir);
+      shadowMultiplier = castShadow(hit.pos, models, jitteredLightDir);
     }
 
     // Material look up
     int materialIndex = hit.materialIndex;
     Material material = getMaterial(materialIndex);
     vec3 color = material.color.rgb;
-    float lightMultiplier = max(dot(hit.normal, lightDir), 0.0);
+    float lightMultiplier = max(dot(hit.normal, jitteredLightDir), 0.0);
     float ambience = 0.2;
     float intensity = (1.0 - ambience) * shadowMultiplier * lightMultiplier + ambience;
     computedColor.rgb = color * intensity;

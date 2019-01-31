@@ -1,9 +1,6 @@
 const int subPixelSideCount = 7;
 
-/**
- * This random code is from https://github.com/evanw/webgl-path-tracing
- */
-vec2 zitterUV(vec2 uv, int tick, ivec2 resolution) {
+vec2 jitterUV(vec2 uv, int tick, ivec2 resolution) {
   int subPixelCount = subPixelSideCount * subPixelSideCount;
   int subPixelIndex = mod(tick, subPixelCount);
   ivec2 subPixelIJ = ivec2(
@@ -17,4 +14,4 @@ vec2 zitterUV(vec2 uv, int tick, ivec2 resolution) {
   return subPixelUV;
 }
 
-#pragma glslify: export(zitterUV)
+#pragma glslify: export(jitterUV)

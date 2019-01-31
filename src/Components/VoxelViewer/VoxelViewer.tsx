@@ -19,6 +19,7 @@ interface VoxelViewerProps { }
 interface VoxelViewerState {
   tick: number;
   eye: number[];
+  lightDir: Vector3;
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
   models: VoxelArt[];
@@ -55,6 +56,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     //     new Vector3(4, 4, 4)
     //   )
     // );
+    const lightDir = new Vector3(-1.1, 1.9, -1.7);
+    lightDir.normalize();
 
     const viewportSize = new Vector2(512, 512);
     this.state = {
@@ -62,6 +65,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       materials: this.scene.materials,
       tick: 0,
       viewportSize,
+      lightDir: lightDir,
       eye: this.camera.position.toArray(),
       viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
@@ -172,6 +176,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
           maxTick={MAX_TICK}
           resolution={resolution}
           eye={this.state.eye}
+          lightDir={this.state.lightDir}
           viewMatrixInverse={this.state.viewMatrixInverse}
           projectionMatrixInverse={this.state.projectionMatrixInverse}
         />
