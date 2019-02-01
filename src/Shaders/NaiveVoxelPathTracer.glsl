@@ -7,6 +7,7 @@ precision highp sampler2D;
 #pragma glslify: Material = require('./Structs/Material')
 #pragma glslify: castRay = require('./Functions/castRay')
 #pragma glslify: getMaterial = require('./Functions/getMaterial')
+#pragma glslify: cosineWeightedDirection = require('./Functions/cosineWeightedDirection')
 #pragma glslify: castShadow = require('./Functions/castShadow')
 #pragma glslify: jitterUV = require('./Functions/jitterUV')
 #pragma glslify: jitterLightDir = require('./Functions/jitterLightDir')
@@ -34,110 +35,121 @@ uniform ivec2 resolution;
 // #pragma glslify: random = require('./Functions/random')
 
 const float EPSILON = 0.0001;
-
-const int subPixelSideCount = 5;
+const int BOUNCE_LIMIT = 5;
 
 void main() {
 
-  // TODO: Does this work???
-  // int subPixelCount = subPixelSideCount * subPixelSideCount;
-  // int subPixelIndex = mod(tick, subPixelCount);
-  // ivec2 subPixelIJ = ivec2(
-  //   mod(subPixelIndex, subPixelSideCount),
-  //   subPixelIndex / subPixelSideCount
-  // );
-  // vec2 subPixelLocalUV = (vec2(subPixelIJ) + 0.5) / float(subPixelSideCount);
-  // vec2 pixelPortion = 1.0 / vec2(resolution);
-  // vec2 subPixelUVOffset = pixelPortion * (subPixelLocalUV - 0.5);
-  //
-
-  // gl_FragColor = vec4(vec2(resolution) / 600.0, 0.0, 1.0); return;
-
-  // test
-  // float d = distance(subPixelLocalUV, uv);
-  // gl_FragColor = d < 0.05 ? vec4(1.0) : vec4(0.0, 0.0, 0.0, 1.0); return;
-
-  // test
-  // subPixelUV = uv;
-
-  // gl_FragColor = vec4(someData[0].colors[0].rgb, 1.0); return;
-  // vec4 texelValue = texture2D(someData[0].tex, uv);
-  // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
-
-  // Debug UV
-  // gl_FragColor = vec4(uv, 0.0, 1.0); return;
-
-  // Color texture test
-  // vec4 texelValue = texture2D(materialColorTexture, uv);
-  // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
-
-  // // Debug voxel texture.
-  // vec4 texelValue = texture2D(modelTexture0, vec2(uv.x, 1.0 - uv.y));
-  // gl_FragColor = vec4(
-  //     vec3(
-  //       (texelValue.r > 0.0 ? 1.0 : 0.0) +
-  //       (texelValue.g > 0.0 ? 1.0 : 0.0) +
-  //       (texelValue.b > 0.0 ? 1.0 : 0.0) +
-  //       (texelValue.a > 0.0 ? 1.0 : 0.0)
-  //     ) / 4.0
-  // , 1.0); return;
-
-  // Test
-  // gl_FragColor = vec4(float(model.textureSize.x) / 10.0, 0.0, 0.0, 1.0); return;
-
-  // Model model = models[1];
-
+  // Seed for random
   float normalizedSeed = float(tick) / float(maxTick);
 
-  // Light direction normalization & zittering
+  // Light zittering
   vec3 normalizedLightDir = normalize(lightDir);
   vec3 jitteredLightDir = jitterLightDir(normalizedLightDir, 0.314, normalizedSeed);
-
 
   // Anti-aliasing
   vec2 jitteredUV = tick == 0 ? uv : jitterUV(uv, tick, resolution);
 
-  // Initial ray
+  // Initial state
   Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, jitteredUV);
+  vec3 accumulatedColor = vec3(0.0);
+  vec3 colorMask = vec3(1.0);
 
-  // float seed = progress;
-  // float rand = random(vec3(12.9898, 78.233, 151.7182), seed);
-  // gl_FragColor = vec4(rand, rand, rand, 1.0);
-  // float n = random(uv);
-  // gl_FragColor = vec4(vec3(n) + rand, 1.0);
-
-  Hit hit = intersectModels(ray, models);
-
-  // vec3 lightDir = normalize(vec3(-1.1, 1.9, -1.7));
-  vec4 computedColor;
-  if (hit.didHit) {
-
-    // Shadow ray
-    // float shadowMultiplier = tick == 0 ? 1.0 : castShadow(hit.pos, models, jitteredLightDir);
+  for (int i = 0; i < BOUNCE_LIMIT; ++i) {
+    Hit hit = intersectModels(ray, models);
+    if (!hit.didHit) {
+      break;
+    }
     float shadowMultiplier = castShadow(hit.pos, models, jitteredLightDir);
-
-    // Material look up
-    int materialIndex = hit.materialIndex;
-    Material material = getMaterial(materialIndex);
-    vec3 color = material.color.rgb;
-    float lightMultiplier = max(dot(hit.normal, jitteredLightDir), 0.0);
-    float ambience = 0.2;
-    float intensity = (1.0 - ambience) * shadowMultiplier * lightMultiplier + ambience;
-    computedColor.rgb = color * intensity;
-    computedColor.a = 1.0;
-  }
-  else {
-    computedColor.rgb = (projectionMatrixInverse * vec4(ray.dir, 1.0)).rgb;
-    computedColor.a = 1.0;
+    float diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
+    Material material = getMaterial(hit.materialIndex);
+    vec3 surfaceColor = material.color.rgb;
+    colorMask *= surfaceColor;
+    accumulatedColor += colorMask * (diffuseAmount * shadowMultiplier);
+    float seed = (float(tick * 10) + float(i)) / 10000.0;
+    ray.dir = cosineWeightedDirection(seed, hit.normal);
+    ray.origin = hit.pos + ray.dir * EPSILON;
   }
 
   // Ignore first render since it is interstitial render without shadows.
-  // float weight = tick == 0 ? 1.0 : 1.0 / float(tick);
-  float weight = 1.0 / float(tick + 1);
-  vec4 previousColor = tick > 0 ? getPreviousColor(uv) : vec4(0.0);
-  vec4 finalColor = mix(previousColor, computedColor, weight);
+  int effectiveTick = tick > 1 ? tick - 1 : tick;
+  float weight = 1.0 / float(effectiveTick + 1);
+  vec4 previousColor = effectiveTick > 0 ? getPreviousColor(uv) : vec4(0.0);
+  vec4 finalColor = mix(previousColor, vec4(accumulatedColor, 1.0), weight);
   gl_FragColor = finalColor;
 }
+
+
+
+// TODO: Does this work???
+// int subPixelCount = subPixelSideCount * subPixelSideCount;
+// int subPixelIndex = mod(tick, subPixelCount);
+// ivec2 subPixelIJ = ivec2(
+//   mod(subPixelIndex, subPixelSideCount),
+//   subPixelIndex / subPixelSideCount
+// );
+// vec2 subPixelLocalUV = (vec2(subPixelIJ) + 0.5) / float(subPixelSideCount);
+// vec2 pixelPortion = 1.0 / vec2(resolution);
+// vec2 subPixelUVOffset = pixelPortion * (subPixelLocalUV - 0.5);
+//
+
+// gl_FragColor = vec4(vec2(resolution) / 600.0, 0.0, 1.0); return;
+
+// test
+// float d = distance(subPixelLocalUV, uv);
+// gl_FragColor = d < 0.05 ? vec4(1.0) : vec4(0.0, 0.0, 0.0, 1.0); return;
+
+// test
+// subPixelUV = uv;
+
+// gl_FragColor = vec4(someData[0].colors[0].rgb, 1.0); return;
+// vec4 texelValue = texture2D(someData[0].tex, uv);
+// gl_FragColor = vec4(texelValue.rgb, 1.0); return;
+
+// Debug UV
+// gl_FragColor = vec4(uv, 0.0, 1.0); return;
+
+// Color texture test
+// vec4 texelValue = texture2D(materialColorTexture, uv);
+// gl_FragColor = vec4(texelValue.rgb, 1.0); return;
+
+// // Debug voxel texture.
+// vec4 texelValue = texture2D(modelTexture0, vec2(uv.x, 1.0 - uv.y));
+// gl_FragColor = vec4(
+//     vec3(
+//       (texelValue.r > 0.0 ? 1.0 : 0.0) +
+//       (texelValue.g > 0.0 ? 1.0 : 0.0) +
+//       (texelValue.b > 0.0 ? 1.0 : 0.0) +
+//       (texelValue.a > 0.0 ? 1.0 : 0.0)
+//     ) / 4.0
+// , 1.0); return;
+
+// Test
+// gl_FragColor = vec4(float(model.textureSize.x) / 10.0, 0.0, 0.0, 1.0); return;
+
+// Model model = models[1];
+
+// // vec3 lightDir = normalize(vec3(-1.1, 1.9, -1.7));
+// vec4 computedColor;
+// if (hit.didHit) {
+
+//   // Shadow ray
+//   // float shadowMultiplier = tick == 0 ? 1.0 : castShadow(hit.pos, models, jitteredLightDir);
+//   float shadowMultiplier = castShadow(hit.pos, models, jitteredLightDir);
+
+//   // Material look up
+//   int materialIndex = hit.materialIndex;
+//   Material material = getMaterial(materialIndex);
+//   vec3 color = material.color.rgb;
+//   float lightMultiplier = max(dot(hit.normal, jitteredLightDir), 0.0);
+//   float ambience = 0.2;
+//   float intensity = (1.0 - ambience) * shadowMultiplier * lightMultiplier + ambience;
+//   computedColor.rgb = color * intensity;
+//   computedColor.a = 1.0;
+// }
+// else {
+//   computedColor.rgb = (projectionMatrixInverse * vec4(ray.dir, 1.0)).rgb;
+//   computedColor.a = 1.0;
+// }
 
 // vec3 accumulatedColor = vec3(0.0);
 // vec3 colorMask = vec3(1.0);

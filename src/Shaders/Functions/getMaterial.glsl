@@ -1,5 +1,5 @@
 #pragma glslify: Material = require('../Structs/Material')
-#pragma glslify: mod = require('../Functions/mod')
+#pragma glslify: mod = require('./mod')
 
 uniform sampler2D materialColorTexture;
 
