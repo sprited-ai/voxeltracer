@@ -95,7 +95,7 @@ void main() {
 
 
   // Anti-aliasing
-  vec2 jitteredUV = jitterUV(uv, tick, resolution);
+  vec2 jitteredUV = tick == 0 ? uv : jitterUV(uv, tick, resolution);
 
   // Initial ray
   Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, jitteredUV);
@@ -112,17 +112,9 @@ void main() {
   vec4 computedColor;
   if (hit.didHit) {
 
-    // test depth.
-    // gl_FragColor = vec4(hit.t * vec3(0.1), 1.0); return;
-
     // Shadow ray
-    float shadowMultiplier;
-    if (tick < 3) {
-      // TODO: Use shadow map for first few
-      shadowMultiplier = 1.0;
-    } else {
-      shadowMultiplier = castShadow(hit.pos, models, jitteredLightDir);
-    }
+    // float shadowMultiplier = tick == 0 ? 1.0 : castShadow(hit.pos, models, jitteredLightDir);
+    float shadowMultiplier = castShadow(hit.pos, models, jitteredLightDir);
 
     // Material look up
     int materialIndex = hit.materialIndex;
@@ -139,6 +131,8 @@ void main() {
     computedColor.a = 1.0;
   }
 
+  // Ignore first render since it is interstitial render without shadows.
+  // float weight = tick == 0 ? 1.0 : 1.0 / float(tick);
   float weight = 1.0 / float(tick + 1);
   vec4 previousColor = tick > 0 ? getPreviousColor(uv) : vec4(0.0);
   vec4 finalColor = mix(previousColor, computedColor, weight);

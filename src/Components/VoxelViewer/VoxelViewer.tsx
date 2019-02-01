@@ -8,6 +8,7 @@ import VoxelArt from "../../Data/Models/VoxelArt";
 import MaterialArray from "../../Data/Arrays/MaterialArray";
 import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
+import ReactTimeout from 'react-timeout'
 
 const MAX_TICK = 256;
 const OrbitControls = require('three-orbit-controls')(THREE);
@@ -29,10 +30,11 @@ interface VoxelViewerState {
 
 class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   // scene: Scene;
-  scene: VoxelScene;
-  camera: PerspectiveCamera;
-  orbitControls?: OrbitControls;
-  loader: Loader;
+  private scene: VoxelScene;
+  private camera: PerspectiveCamera;
+  private orbitControls?: OrbitControls;
+  private loader: Loader;
+  private pauseCount: number = 0;
 
   constructor(props: VoxelViewerProps) {
     super(props);
@@ -76,13 +78,13 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 
   sceneDidChange(): void {
-    this.endAnimation();
     this.setState({
       models: this.scene.models,
       materials: this.scene.materials,
       tick: 0
     });
-    this.startAnimation();
+    this.restartAnimation();
+    this.pauseAnimation(200);
   }
 
   startAnimation(): void {
@@ -93,13 +95,23 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     (this.props as any).endAnimation();
   }
 
+  pauseAnimation(ms: number) {
+    this.pauseCount++;
+    (this.props as any).setTimeout(() => {
+      this.pauseCount--;
+      if (this.pauseCount <= 0) {
+        this.pauseCount = 0;
+        this.startAnimation();
+      }
+    }, ms)
+  }
+
   didOrbit = (event: Event) => {
     this.cameraDidUpdate();
+    this.pauseAnimation(100);
   }
 
   cameraDidUpdate() {
-    this.endAnimation();
-
     // TODO: Figure out why this is needed.
     // Ideally, this should have been handled by the Orbit controlls.
     this.camera.lookAt(new Vector3(0, 0, 0));
@@ -111,7 +123,6 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       //@ts-ignore
       projectionMatrixInverse: this.camera.projectionMatrixInverse.elements
     });
-    this.startAnimation();
   }
 
   componentDidMount() {
@@ -138,7 +149,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   }
 
-  restartRender() {
+  restartAnimation() {
     this.endAnimation();
     this.setState({ tick: 0 });
     this.startAnimation();
@@ -146,7 +157,12 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   onAnimationFrame(time: number) {
     const { tick } = this.state;
-    this.setState({ tick: tick + 1 });
+    if (this.pauseCount > 0) {
+      return;
+    }
+    this.setState({
+      tick: tick + 1
+    });
     if (tick > MAX_TICK) {
       console.log('Render completed.');
       this.endAnimation();
@@ -160,12 +176,12 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   onContextRestored = () => {
     console.log('context restored');
-    this.restartRender();
+    this.restartAnimation();
   }
 
   onWindowResize = () => {
     console.log('window resize');
-    this.restartRender();
+    this.restartAnimation();
   }
 
   render() {
@@ -210,4 +226,4 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 }
 
-export default ReactAnimationFrame(VoxelViewer);
+export default ReactTimeout(ReactAnimationFrame(VoxelViewer));

@@ -43,7 +43,17 @@ const getModelHashes = function (models: VoxelArt[]): any[] {
 };
 
 const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
-  const { resolution, eye, viewMatrixInverse, projectionMatrixInverse, tick, maxTick, models, materials, lightDir } = props;
+  const {
+    resolution,
+    eye,
+    viewMatrixInverse,
+    projectionMatrixInverse,
+    tick,
+    maxTick,
+    models,
+    materials,
+    lightDir
+  } = props;
   const uniforms: any = {
     eye,
     tick,
