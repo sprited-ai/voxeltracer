@@ -125,7 +125,7 @@ export default class MagicaVoxelContext extends Context {
 
         const pos = new Vector3(
           -Math.floor(size.x / 2),
-          -Math.floor(size.y / 2),
+          0,
           -Math.floor(size.z / 2)
         );
         const model = new VoxelArt(pos, size);
@@ -177,7 +177,8 @@ export default class MagicaVoxelContext extends Context {
     const chunkSize = 12 + numBytesOfChunkContent + numBytesOfChildrenChunks;
     let chunk: Chunk;
 
-    console.log(`Decoding ${chunkId} chunk at ${chunkStart} byte offset (size: ${chunkSize}bytes)`);
+    // console.log(`Decoding ${chunkId} chunk at ${chunkStart} byte offset (size: ${chunkSize}bytes)`);
+    // console.log(`Decoding ${chunkId}`);
 
     if (chunkId === 'MAIN') {
       const children: Chunk[] = [];
@@ -215,7 +216,7 @@ export default class MagicaVoxelContext extends Context {
       chunk = new MattChunk();
     }
     else {
-      console.warn(`Skipping unsupported chunk type "${chunkId}"`);
+      // console.log(`Skipping unsupported chunk type "${chunkId}"`);
       chunk = new UnsupportedChunk();
     }
 

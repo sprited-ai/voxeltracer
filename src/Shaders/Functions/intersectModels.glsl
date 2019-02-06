@@ -2,6 +2,7 @@
 #pragma glslify: Hit = require('../Structs/Hit')
 #pragma glslify: Model = require('../Structs/Model')
 #pragma glslify: intersectModel = require('../Functions/intersectModel')
+#pragma glslify: intersectGround = require('../Functions/intersectGround')
 
 const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 
@@ -10,6 +11,8 @@ const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
  */
 Hit intersectModels(Ray ray, Model models[8]) {
   Hit nearestHit = miss;
+
+  // Models
   for (int i = 0; i < 8; ++i) {
     Model model = models[i];
     if (model.index == -1) continue;
@@ -20,6 +23,15 @@ Hit intersectModels(Ray ray, Model models[8]) {
       }
     }
   }
+
+  // Ground
+  Hit groundHit = intersectGround(ray);
+  if (groundHit.didHit) {
+    if (!nearestHit.didHit || groundHit.t < nearestHit.t) {
+      nearestHit = groundHit;
+    }
+  }
+
   return nearestHit;
 }
 
