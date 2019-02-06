@@ -13,13 +13,14 @@ precision highp sampler2D;
 #pragma glslify: jitterLightDir = require('./Functions/jitterLightDir')
 #pragma glslify: intersectModels = require('./Functions/intersectModels')
 #pragma glslify: getPreviousColor = require('./Functions/getPreviousColor')
+#pragma glslify: MAX_MODEL_COUNT = require('./Constants/MAX_MODEL_COUNT')
 
 varying vec2 uv;
 uniform vec3 eye;
 uniform vec3 lightDir;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
-uniform Model models[8];
+uniform Model models[MAX_MODEL_COUNT];
 // uniform sampler2D previousFrameBuffer;
 // uniform sampler2D colorPaletteTexture;
 // uniform sampler2D materialColorTexture;

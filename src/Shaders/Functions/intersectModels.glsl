@@ -3,17 +3,18 @@
 #pragma glslify: Model = require('../Structs/Model')
 #pragma glslify: intersectModel = require('../Functions/intersectModel')
 #pragma glslify: intersectGround = require('../Functions/intersectGround')
+#pragma glslify: MAX_MODEL_COUNT = require('../Constants/MAX_MODEL_COUNT')
 
 const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 
 /**
  * Intersect models
  */
-Hit intersectModels(Ray ray, Model models[8]) {
+Hit intersectModels(Ray ray, Model models[MAX_MODEL_COUNT]) {
   Hit nearestHit = miss;
 
   // Models
-  for (int i = 0; i < 8; ++i) {
+  for (int i = 0; i < MAX_MODEL_COUNT; ++i) {
     Model model = models[i];
     if (model.index == -1) continue;
     Hit hit = intersectModel(ray, models[i]);

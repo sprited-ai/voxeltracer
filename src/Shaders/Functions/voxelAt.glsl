@@ -2,13 +2,13 @@
 #pragma glslify: mod = require('../Functions/mod')
 
 uniform sampler2D modelTexture0;
-uniform sampler2D modelTexture1;
-uniform sampler2D modelTexture2;
-uniform sampler2D modelTexture3;
-uniform sampler2D modelTexture4;
-uniform sampler2D modelTexture5;
-uniform sampler2D modelTexture6;
-uniform sampler2D modelTexture7;
+// uniform sampler2D modelTexture1;
+// uniform sampler2D modelTexture2;
+// uniform sampler2D modelTexture3;
+// uniform sampler2D modelTexture4;
+// uniform sampler2D modelTexture5;
+// uniform sampler2D modelTexture6;
+// uniform sampler2D modelTexture7;
 
 int voxelAt(Model model, ivec3 cellIndex) {
   // 4 stacks of y axis cross section in one slate.
@@ -27,27 +27,27 @@ int voxelAt(Model model, ivec3 cellIndex) {
   if (model.index == 0) {
     slateValue = texture2D(modelTexture0, flippedUV);
   }
-  else if (model.index == 1) {
-    slateValue = texture2D(modelTexture1, flippedUV);
-  }
-  else if (model.index == 2) {
-    slateValue = texture2D(modelTexture2, flippedUV);
-  }
-  else if (model.index == 3) {
-    slateValue = texture2D(modelTexture3, flippedUV);
-  }
-  else if (model.index == 4) {
-    slateValue = texture2D(modelTexture4, flippedUV);
-  }
-  else if (model.index == 5) {
-    slateValue = texture2D(modelTexture5, flippedUV);
-  }
-  else if (model.index == 6) {
-    slateValue = texture2D(modelTexture6, flippedUV);
-  }
-  else {
-    slateValue = texture2D(modelTexture7, flippedUV);
-  }
+  // else if (model.index == 1) {
+  //   slateValue = texture2D(modelTexture1, flippedUV);
+  // }
+  // else if (model.index == 2) {
+  //   slateValue = texture2D(modelTexture2, flippedUV);
+  // }
+  // else if (model.index == 3) {
+  //   slateValue = texture2D(modelTexture3, flippedUV);
+  // }
+  // else if (model.index == 4) {
+  //   slateValue = texture2D(modelTexture4, flippedUV);
+  // }
+  // else if (model.index == 5) {
+  //   slateValue = texture2D(modelTexture5, flippedUV);
+  // }
+  // else if (model.index == 6) {
+  //   slateValue = texture2D(modelTexture6, flippedUV);
+  // }
+  // else {
+  //   slateValue = texture2D(modelTexture7, flippedUV);
+  // }
 
   // Select the right slice
   if (sliceIndex == 0) {

@@ -7,7 +7,8 @@ import ndarray from 'ndarray';
 import { Vector3 } from "three";
 import EnhancedNode from "./EnhancedNode";
 
-export const MAX_MODELS = 8;
+// Always use one model for now.
+export const MAX_MODELS = 1;
 
 interface VoxelShaderProps {
   eye: number[];
