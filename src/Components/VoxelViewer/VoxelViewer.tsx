@@ -167,7 +167,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     if (tick === 0) {
       console.log('Render started');
     }
-    else if (tick % 50 === 0) {
+    else if (tick % 10 === 0) {
       console.log(`Rendering: ${tick}/${MAX_TICK}.`);
     }
     if (tick > MAX_TICK) {

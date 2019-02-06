@@ -14,22 +14,27 @@ class EnhancedNode extends Node {
   _prepareGLObjects(gl: WebGLRenderingContext): void {
 
     // Load extension for floating point frame buffers.
-    gl.getExtension('OES_texture_float');
-
-    // Fool gl-react to use gl.FLOAT instead of
-    // gl.UNSIGNED_BYTE for its frame buffer type.
-    const glProxy = new Proxy(gl, {
-      get(gl: WebGLRenderingContext, prop: string) {
-        // console.log(`Proxying gl.${prop}`);
-        switch(prop) {
-          case 'UNSIGNED_BYTE': return gl.FLOAT;
-          default:
-            const member = (gl as any)[prop];
-            return typeof member === 'function' ? member.bind(gl) : member;
+    if (gl.getExtension('OES_texture_float')) {
+      console.log('Using OES_texture_float WebGL extension.');
+      // Fool gl-react to use gl.FLOAT instead of
+      // gl.UNSIGNED_BYTE for its frame buffer type.
+      const glProxy = new Proxy(gl, {
+        get(gl: WebGLRenderingContext, prop: string) {
+          // console.log(`Proxying gl.${prop}`);
+          switch(prop) {
+            case 'UNSIGNED_BYTE': return gl.FLOAT;
+            default:
+              const member = (gl as any)[prop];
+              return typeof member === 'function' ? member.bind(gl) : member;
+          }
         }
-      }
-    });
-    return super._prepareGLObjects(glProxy);
+      });
+      return super._prepareGLObjects(glProxy);
+    }
+    else {
+      console.log('OES_texture_float WebGL extension is not available.');
+      return super._prepareGLObjects(gl);
+    }
   }
 }
 
