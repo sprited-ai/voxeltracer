@@ -1,10 +1,11 @@
 import React from "react";
-import { Shaders, Node, GLSL, Uniform, NearestCopy } from "gl-react";
+import { Shaders, GLSL, Uniform, NearestCopy } from "gl-react";
 import NaiveVoxelPathTracer from '../../Shaders/NaiveVoxelPathTracer.glsl';
 import VoxelArt from '../../Data/Models/VoxelArt';
 import MaterialArray from "../../Data/Arrays/MaterialArray";
 import ndarray from 'ndarray';
 import { Vector3 } from "three";
+import EnhancedNode from "./EnhancedNode";
 
 export const MAX_MODELS = 8;
 
@@ -84,7 +85,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
   }
   return (
     <NearestCopy>
-      <Node
+      <EnhancedNode
         shader={shaders.vt01}
         uniforms={uniforms}
         uniformsOptions={uniformsOptions}
