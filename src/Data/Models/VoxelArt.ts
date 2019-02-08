@@ -1,7 +1,8 @@
 import { Vector3, Vector2 } from "three";
 import ndarray from "ndarray";
 
-export const MAX_TEXTURE_WIDTH = 8192;
+// iOS 12.1 (16B91) Simulator's max is 4096.
+export const MAX_TEXTURE_WIDTH = 4096;
 
 export default class VoxelArt {
   pos: Vector3;
