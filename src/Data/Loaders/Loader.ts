@@ -1,8 +1,5 @@
 import VoxelScene from "../Models/VoxelScene";
-import VoxelArt from "../Models/VoxelArt";
-import Material from "../Models/Material";
-import MaterialArray from "../Arrays/MaterialArray";
-import MagicaVoxelContext from "./MagicaVoxelContext";
+import MagicaVoxelContext from "./MagicaVoxel/MagicaVoxelContext";
 import Context from "./Context";
 
 export default class Loader {

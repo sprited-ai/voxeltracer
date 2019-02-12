@@ -1,66 +1,62 @@
-import VoxelScene from "../Models/VoxelScene";
-import VoxelArt from "../Models/VoxelArt";
-import Material from "../Models/Material";
-import MaterialArray from "../Arrays/MaterialArray";
-import Context from "./Context";
-import { readInt, readStr, uint8 } from "./ByteUtil";
+import VoxelScene from "../../Models/VoxelScene";
+import VoxelArt from "../../Models/VoxelArt";
+import MaterialArray from "../../Arrays/MaterialArray";
+import Context from "../Context";
+import { readInt, readFloat, readStr, uint8 } from "../ByteUtil";
 import { Vector3, Matrix4, Vector4 } from "three";
+import Chunk from "./Chunks/Chunk";
+import MainChunk from "./Chunks/MainChunk";
+import MatlChunk, { MatlChunkOptions } from "./Chunks/MatlChunk";
+import MattChunk from "./Chunks/MattChunk";
+import PackChunk from "./Chunks/PackChunk";
+import RgbaChunk from "./Chunks/RgbaChunk";
+import SizeChunk from "./Chunks/SizeChunk";
+import XyziChunk from "./Chunks/XyziChunk";
+import UnsupportedChunk from "./Chunks/UnsupportedChunk";
+import MaterialType from "../../../Enums/MaterialType";
+import ColorArray from "../../Arrays/ColorArray";
+import DiffuseMaterial from "../../Materials/DiffuseMaterial";
+import MetallicMaterial from "../../Materials/MetallicMaterial";
+import GlassMaterial from "../../Materials/GlassMaterial";
+import EmmissiveMaterial from "../../Materials/EmissiveMaterial";
 
-class Chunk {
-  size: number = 0;
+// /**
+//  * Dictionary type
+//  */
+// enum AttributeValueType {
+//   'String' = 'string',
+//   'Integer' = 'int',
+//   'Float' = 'float'
+// }
+
+// /**
+//  * Dictionary preset
+//  */
+// type AttributePreset = {
+//   [key: string]: AttributeValueType;
+// }
+
+/**
+ * Dictionary
+ */
+type Dict = {
+  [key: string]: string | number;
+  numBytes: number;
 }
 
-class MainChunk extends Chunk {
-  children: Chunk[];
-  constructor(children: Chunk[]) {
-    super();
-    this.children = children;
-  }
-}
-
-class PackChunk extends Chunk {
-  numModels: number;
-  constructor(numModels: number) {
-    super();
-    this.numModels = numModels;
-  }
-}
-
-class SizeChunk extends Chunk {
-  x: number = 0;
-  y: number = 0;
-  z: number = 0;
-  constructor(x: number, y: number, z: number) {
-    super();
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  }
-}
-
-class XyziChunk extends Chunk {
-  xyzis: Uint8Array;
-  constructor(xyzis: Uint8Array) {
-    super();
-    this.xyzis = xyzis;
-  }
-}
-
-class RgbaChunk extends Chunk {
-  rgbas: Uint8Array;
-  constructor(rgbas: Uint8Array) {
-    super();
-    this.rgbas = rgbas;
-  }
-}
-
-class MattChunk extends Chunk {
-  // Not implemented yet
-}
-
-class UnsupportedChunk extends Chunk {
-  // Not implemented yet
-}
+// /**
+//  * Dictionary preset for MATL attributes
+//  */
+// const matlAttributePreset: AttributePreset = {
+//   _type
+//   _weight
+//   _rough
+//   _spec
+//   _ior
+//   _att
+//   _flux
+//   _plastic
+// }
 
 /**
  * MagicaVoxel coordinate to OpenGL coordinate system.
@@ -97,6 +93,7 @@ export default class MagicaVoxelContext extends Context {
 
   private decode150(buffer: ArrayBuffer): VoxelScene {
     const models: VoxelArt[] = [];
+    const colors: ColorArray = new ColorArray();
     const materials: MaterialArray = new MaterialArray();
 
     const mainChunk = this.decodeChunk(buffer, 8);
@@ -156,15 +153,45 @@ export default class MagicaVoxelContext extends Context {
           const b = rgbas[offset + 2];
           const a = rgbas[offset + 3];
           const color = new Vector4(r, g, b, a);
-          materials.applyAt(i + 1, { color });
+          colors.setAt(i + 1, color);
         }
+      }
+      else if(chunk instanceof MatlChunk) {
+        const { materialId, options } = chunk;
+        let material;
+        switch(options.type) {
+          case MaterialType.METAL: material = new MetallicMaterial(options.weight!, options.rough!, options.spec!, options.plastic!); break;
+          case MaterialType.GLASS: material = new GlassMaterial(options.weight!, options.rough!, options.ior!, options.att!); break;
+          case MaterialType.EMISSIVE: material = new EmmissiveMaterial(options.weight!, options.flux!, 0); break;
+          default: material = new DiffuseMaterial();
+        }
+        materials.setAt(materialId, material);
       }
 
     }
 
-    console.log(mainChunk);
+    console.log(mainChunk, models, colors, materials);
 
-    return new VoxelScene(models, materials);
+    return new VoxelScene(models, colors, materials);
+  }
+
+  private parseDict(buffer: ArrayBuffer, byteOffset: number): Dict {
+    const total = readInt(buffer, byteOffset);
+    const result: Dict = {
+      numBytes: 0
+    };
+    let cursor = byteOffset + 4;
+    for (let i = 0; i < total; ++i) {
+      const keyLen = readInt(buffer, cursor);
+      const key = readStr(buffer, cursor + 4, keyLen);
+      const valueStart = cursor + keyLen + 4;
+      const valueLen = readInt(buffer, valueStart);
+      const value = readStr(buffer, valueStart + 4, valueLen);
+      cursor = valueStart + valueLen + 4;
+      result[key] = value;
+    }
+    result.numBytes = cursor - byteOffset;
+    return result;
   }
 
   private decodeChunk(buffer: ArrayBuffer, chunkStart: number) {
@@ -214,6 +241,46 @@ export default class MagicaVoxelContext extends Context {
     }
     else if (chunkId === 'MATT') {
       chunk = new MattChunk();
+    }
+    else if (chunkId === 'MATL') {
+      const materialId = readInt(buffer, contentStart);
+      const dict = this.parseDict(buffer, contentStart + 4);
+
+      // Type
+      let type;
+      switch(dict._type) {
+        case '_diffuse': type = MaterialType.DIFFUSE; break;
+        case '_metal': type = MaterialType.METAL; break;
+        case '_glass': type = MaterialType.GLASS; break;
+        case '_emit': type = MaterialType.EMISSIVE; break;
+        default: type = MaterialType.DIFFUSE; break;
+      }
+
+      const options: MatlChunkOptions = { type };
+
+      if (dict._weight) {
+        options.weight = parseFloat(dict._weight as string);
+      }
+      if (dict._rough) {
+        options.rough = parseFloat(dict._rough as string);
+      }
+      if (dict._spec) {
+        options.spec = parseFloat(dict._spec as string);
+      }
+      if (dict._ior) {
+        options.ior = parseFloat(dict._ior as string);
+      }
+      if (dict._att) {
+        options.att = parseFloat(dict._att as string);
+      }
+      if (dict._flux) {
+        options.flux = parseFloat(dict._flux as string);
+      }
+      if (dict._plastic) {
+        options.plastic = !!parseInt(dict._plastic as string);
+      }
+
+      chunk = new MatlChunk(materialId, options);
     }
     else {
       // console.log(`Skipping unsupported chunk type "${chunkId}"`);

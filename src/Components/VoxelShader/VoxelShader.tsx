@@ -6,6 +6,7 @@ import MaterialArray from "../../Data/Arrays/MaterialArray";
 import ndarray from 'ndarray';
 import { Vector3 } from "three";
 import EnhancedNode from "./EnhancedNode";
+import ColorArray from "../../Data/Arrays/ColorArray";
 
 // Always use one model for now.
 export const MAX_MODELS = 1;
@@ -19,6 +20,7 @@ interface VoxelShaderProps {
   maxTick: number;
   resolution: number[];
   models: VoxelArt[];
+  colors: ColorArray;
   materials: MaterialArray;
 }
 
@@ -32,7 +34,7 @@ const getModelHashes = function (models: VoxelArt[]): any[] {
   const nullModel = new VoxelArt();
   const modelHashes = [];
   for (let i = 0; i < MAX_MODELS; ++i) {
-    const model = models[i] || nullModel;
+    const model = models && models[i] || nullModel;
     const index = model === nullModel ? -1 : i;
     modelHashes.push({
       index,
@@ -53,7 +55,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     tick,
     maxTick,
     models,
-    materials,
+    colors,
     lightDir
   } = props;
   const uniforms: any = {
@@ -65,7 +67,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     lightDir: lightDir.toArray(),
     projectionMatrixInverse,
     models: getModelHashes(models),
-    materialColorTexture: materials.colorTexture,
+    materialColorTexture: colors.colorTexture,
     previousFrameBuffer: Uniform.Backbuffer
   };
   const uniformsOptions: any = {

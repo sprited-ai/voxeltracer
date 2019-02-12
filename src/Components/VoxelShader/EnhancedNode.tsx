@@ -14,6 +14,7 @@ class EnhancedNode extends Node {
   _prepareGLObjects(gl: WebGLRenderingContext): void {
 
     let ext;
+
     // Load extension for floating point frame buffers. iOS device
     // (currently iOS 12) does not really support 32bit floating
     // points frame buffers (it says it does, but not really). You

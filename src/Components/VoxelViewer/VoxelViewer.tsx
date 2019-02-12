@@ -9,6 +9,7 @@ import MaterialArray from "../../Data/Arrays/MaterialArray";
 import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
 import ReactTimeout from 'react-timeout'
+import ColorArray from "../../Data/Arrays/ColorArray";
 
 const MAX_TICK = 1024;
 const OrbitControls = require('three-orbit-controls')(THREE);
@@ -25,6 +26,7 @@ interface VoxelViewerState {
   projectionMatrixInverse: Float32Array;
   models: VoxelArt[];
   materials: MaterialArray;
+  colors: ColorArray;
   viewportSize: Vector2;
 }
 
@@ -67,6 +69,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     this.state = {
       models: this.scene.models,
       materials: this.scene.materials,
+      colors: this.scene.colors,
       tick: 0,
       viewportSize,
       lightDir: lightDir,
@@ -81,6 +84,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     this.setState({
       models: this.scene.models,
       materials: this.scene.materials,
+      colors: this.scene.colors,
       tick: 0
     });
     this.restartAnimation();
@@ -218,6 +222,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       >
         <VoxelShader
           models={this.state.models}
+          colors={this.state.colors}
           materials={this.state.materials}
           tick={this.state.tick}
           maxTick={MAX_TICK}
