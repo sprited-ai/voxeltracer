@@ -56,6 +56,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     maxTick,
     models,
     colors,
+    materials,
     lightDir
   } = props;
   const uniforms: any = {
@@ -67,11 +68,15 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     lightDir: lightDir.toArray(),
     projectionMatrixInverse,
     models: getModelHashes(models),
-    materialColorTexture: colors.colorTexture,
+    colorTexture: colors.colorTexture,
+    materialTexture: materials.materialTexture,
     previousFrameBuffer: Uniform.Backbuffer
   };
   const uniformsOptions: any = {
-    materialColorTexture: {
+    colorTexture: {
+      interpolation: 'nearest'
+    },
+    materialTexture: {
       interpolation: 'nearest'
     },
     previousFrameBuffer: {

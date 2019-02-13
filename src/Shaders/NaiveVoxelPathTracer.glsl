@@ -23,7 +23,8 @@ uniform mat4 projectionMatrixInverse;
 uniform Model models[MAX_MODEL_COUNT];
 // uniform sampler2D previousFrameBuffer;
 // uniform sampler2D colorPaletteTexture;
-// uniform sampler2D materialColorTexture;
+// uniform sampler2D colorTexture;
+// uniform sampler2D materialTexture;
 // uniform int modelCount;
 // uniform sampler2D modelTexture0;
 // uniform ivec3 modelPos;
@@ -66,9 +67,11 @@ void main() {
     // Shadow
     float shadowMultiplier = castShadow(hit.pos, models, jitteredLightDir);
 
+    // Get material
+    Material material = getMaterial(hit.materialIndex);
+
     // Diffuse
     float diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
-    Material material = getMaterial(hit.materialIndex);
 
     // Apply Color
     vec3 surfaceColor = material.color.rgb;
@@ -127,7 +130,7 @@ void main() {
 // gl_FragColor = vec4(uv, 0.0, 1.0); return;
 
 // Color texture test
-// vec4 texelValue = texture2D(materialColorTexture, uv);
+// vec4 texelValue = texture2D(colorTexture, uv);
 // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
 
 // // Debug voxel texture.
@@ -198,4 +201,13 @@ void main() {
 //     ray.origin = hitPoint + ray.dir * EPSILON;
 // }
 
+// // Material texture test
+// vec4 texelValue = texture2D(materialTexture, uv);
+// gl_FragColor = vec4(texelValue.g, 0.0, 0.0, 1.0);
+// return;
+
+// Testing
+// if (material.type != 1) {
+//   diffuseAmount = 0.0;
+// }
 
