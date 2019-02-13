@@ -10,6 +10,8 @@ export interface MatlChunkOptions {
   att?: number;
   flux?: number;
   plastic?: boolean;
+  glow?: number;
+  unit?: number;
 }
 
 export default class MatlChunk extends Chunk {

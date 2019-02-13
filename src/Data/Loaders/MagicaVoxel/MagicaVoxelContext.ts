@@ -281,10 +281,10 @@ export default class MagicaVoxelContext extends Context {
         options.plastic = !!parseInt(dict._plastic as string);
       }
       if (dict._unit) {
-        options.unit = !!parseInt(dict._unit as string);
+        options.unit = parseInt(dict._unit as string);
       }
       if (dict._glow) {
-        options.glow = !!parseInt(dict._glow as string);
+        options.glow = parseInt(dict._glow as string);
       }
 
       chunk = new MatlChunk(materialId, options);
