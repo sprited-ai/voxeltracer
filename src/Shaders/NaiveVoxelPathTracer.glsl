@@ -36,7 +36,7 @@ uniform ivec2 resolution;
 // #pragma glslify: random = require('./Functions/random')
 
 const float EPSILON = 0.0001;
-const int BOUNCE_LIMIT = 5;
+const int BOUNCE_LIMIT = 1;
 
 void main() {
 
@@ -55,7 +55,8 @@ void main() {
   vec3 accumulatedColor = vec3(0.0);
   vec3 colorMask = vec3(1.0);
 
-  for (int i = 0; i < BOUNCE_LIMIT; ++i) {
+  // TODO: Bounce limit should be configurable by the user.
+  for (int i = 0; i < BOUNCE_LIMIT + 1; ++i) {
     // Trace
     Hit hit = intersectModels(ray, models);
 
