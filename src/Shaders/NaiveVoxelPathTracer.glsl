@@ -8,12 +8,17 @@ precision highp sampler2D;
 #pragma glslify: castRay = require('./Functions/castRay')
 #pragma glslify: getMaterial = require('./Functions/getMaterial')
 #pragma glslify: cosineWeightedDirection = require('./Functions/cosineWeightedDirection')
+#pragma glslify: uniformlyRandomVector = require('./Functions/uniformlyRandomVector')
 #pragma glslify: castShadow = require('./Functions/castShadow')
 #pragma glslify: jitterUV = require('./Functions/jitterUV')
 #pragma glslify: jitterLightDir = require('./Functions/jitterLightDir')
 #pragma glslify: intersectModels = require('./Functions/intersectModels')
 #pragma glslify: getPreviousColor = require('./Functions/getPreviousColor')
 #pragma glslify: MAX_MODEL_COUNT = require('./Constants/MAX_MODEL_COUNT')
+#pragma glslify: MATL_DIFFUSE = require('./Constants/MATL_DIFFUSE');
+#pragma glslify: MATL_METAL = require('./Constants/MATL_METAL');
+#pragma glslify: MATL_GLASS = require('./Constants/MATL_GLASS');
+#pragma glslify: MATL_EMISSIVE = require('./Constants/MATL_EMISSIVE');
 
 varying vec2 uv;
 uniform vec3 eye;
@@ -73,22 +78,43 @@ void main() {
     // Diffuse
     float diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
 
+    // Specular
+    float specularHighlight = 0.0;
+    if (material.type == MATL_METAL) {
+      vec3 reflectedLight = normalize(reflect(jitteredLightDir - hit.pos, hit.normal));
+      specularHighlight = max(0.0, dot(reflectedLight, normalize(hit.pos - ray.origin)));
+      specularHighlight = material.specular * pow(specularHighlight, 3.0);
+    }
+
     // Apply Color
     vec3 surfaceColor = material.color.rgb;
     colorMask *= surfaceColor;
 
     // Accumulate Colors
-    accumulatedColor += colorMask * (diffuseAmount * shadowMultiplier);
+    // TODO: Verify mathmatical soundness.
+    accumulatedColor += colorMask * diffuseAmount * shadowMultiplier;
+    accumulatedColor += colorMask * specularHighlight * shadowMultiplier;
 
     // First slide will have no indirect lighting
     if (tick == 0) {
       break;
     }
 
-    // Compute next direction.
+    // Compute next ray
     float seed = (float(tick * 10) + float(i)) / 10000.0;
-    ray.dir = cosineWeightedDirection(seed, hit.normal);
     ray.origin = hit.pos + ray.dir * EPSILON;
+
+    // Metal bounce
+    if (material.type == MATL_METAL) {
+      ray.dir = normalize(reflect(ray.dir, hit.normal)) +
+        uniformlyRandomVector(seed) * material.roughness;
+    }
+    // Diffuse bounce
+    else {
+      ray.dir = cosineWeightedDirection(seed, hit.normal);
+    }
+
+
   }
 
   // Ignore first render since it is interstitial render without shadows.
