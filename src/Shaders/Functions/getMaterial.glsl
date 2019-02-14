@@ -1,5 +1,9 @@
 #pragma glslify: Material = require('../Structs/Material')
 #pragma glslify: mod = require('./mod')
+#pragma glslify: MATL_DIFFUSE = require('../Constants/MATL_DIFFUSE');
+#pragma glslify: MATL_METAL = require('../Constants/MATL_METAL');
+#pragma glslify: MATL_GLASS = require('../Constants/MATL_GLASS');
+#pragma glslify: MATL_EMISSIVE = require('../Constants/MATL_EMISSIVE');
 
 uniform sampler2D colorTexture;
 uniform sampler2D materialTexture;
@@ -26,19 +30,19 @@ Material getMaterial(int index) {
     float glow = 0.0;
 
     // Metal
-    if (type == 1) {
+    if (type == MATL_METAL) {
       weight = options.g;
       roughness = options.b;
       specular = options.a;
     }
     // Glass
-    else if (type == 2) {
+    else if (type == MATL_GLASS) {
       weight = options.g;
       roughness = options.b;
       refraction = options.a;
     }
     // Emissive
-    else if (type == 3) {
+    else if (type == MATL_EMISSIVE) {
       weight = options.g;
       flux = options.b;
       glow = options.a;
