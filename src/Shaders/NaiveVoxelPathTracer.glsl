@@ -42,7 +42,7 @@ uniform ivec2 resolution;
 // #pragma glslify: random = require('./Functions/random')
 
 const float EPSILON = 0.0001;
-const int BOUNCE_LIMIT = 1;
+const int BOUNCE_LIMIT = 2;
 
 void main() {
 
