@@ -73,7 +73,7 @@ void main() {
     if (!hit.didHit) break;
 
     // Shadow
-    float shadowMultiplier = castShadow(hit.pos, models, jitteredLightDir);
+    float shadowMultiplier = castShadow(hit.pos, hit.normal, models, jitteredLightDir);
 
     // Get material
     Material material = getMaterial(hit.materialIndex);
