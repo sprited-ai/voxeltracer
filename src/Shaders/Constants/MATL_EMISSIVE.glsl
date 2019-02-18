@@ -1,3 +1,3 @@
-const int MATL_EMMISSIVE = 3;
+const int MATL_EMISSIVE = 3;
 
-#pragma glslify: export(MATL_EMMISSIVE)
+#pragma glslify: export(MATL_EMISSIVE)
