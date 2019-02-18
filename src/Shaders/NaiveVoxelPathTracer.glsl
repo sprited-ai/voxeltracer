@@ -77,15 +77,35 @@ void main() {
     // Get material
     Material material = getMaterial(hit.materialIndex);
 
-    // Diffuse
-    float diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
+    // // Debug
+    // gl_FragColor = vec4(
+    //   material.type == MATL_DIFFUSE ? 1.0 : 0.0,
+    //   material.type == MATL_METAL ? 1.0 : 0.0,
+    //   material.type == MATL_GLASS ? 1.0 : 0.0,
+    //   1.0
+    // );
+    // return;
 
-    // Specular
+    // Components
+    float diffuseAmount = 0.0;
     float specularHighlight = 0.0;
+    float emission = 0.0;
+
+    // Metal
     if (material.type == MATL_METAL) {
+      diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
       vec3 reflectedLight = normalize(reflect(jitteredLightDir - hit.pos, hit.normal));
       specularHighlight = max(0.0, dot(reflectedLight, normalize(hit.pos - ray.origin)));
       specularHighlight = material.weight * material.specular * pow(specularHighlight, 3.0);
+    }
+    // Emmisive
+    else if (material.type == MATL_EMISSIVE) {
+      diffuseAmount = (1.0 - material.weight) * max(0.0, dot(jitteredLightDir, hit.normal));
+      emission = material.weight * 30.0 * material.flux;
+    }
+    // Diffuse
+    else {
+      diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
     }
 
     // Apply Color
@@ -97,6 +117,7 @@ void main() {
     // TODO: Seems to be overdosing diffuse on metal shaders.
     accumulatedColor += colorMask * diffuseAmount * shadowMultiplier;
     accumulatedColor += colorMask * specularHighlight * shadowMultiplier;
+    accumulatedColor += colorMask * emission;
 
     // First slide will have no indirect lighting
     if (tick == 0) {

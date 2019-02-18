@@ -37,7 +37,7 @@ export default class MaterialArray {
     // Emmission
     // TODO: We are currently ignoring `unit` bit for now.
     else if (material instanceof EmmissiveMaterial) {
-      const typeByte = MaterialType.GLASS;
+      const typeByte = MaterialType.EMISSIVE;
       const weightByte = Math.round(material.weight * 255);
       const fluxByte = Math.round(material.flux * 255);
       const glowByte = Math.round(material.glow * 255);
