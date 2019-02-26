@@ -84,7 +84,7 @@ void main() {
       specularHighlight = material.weight * material.specular * pow(specularHighlight, 3.0);
     }
     // Glass
-    if (material.type == MATL_METAL) {
+    if (material.type == MATL_GLASS) {
       diffuseAmount = (1.0 - material.weight) * max(0.0, dot(jitteredLightDir, hit.normal));
     }
     // Emmisive
