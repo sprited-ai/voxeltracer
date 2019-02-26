@@ -13,6 +13,7 @@ precision highp sampler2D;
 #pragma glslify: intersectModels = require('./Functions/intersectModels')
 #pragma glslify: bounceRay = require('./Functions/bounceRay')
 #pragma glslify: getPreviousColor = require('./Functions/getPreviousColor')
+#pragma glslify: fresnel = require('./Functions/fresnel')
 #pragma glslify: MAX_MODEL_COUNT = require('./Constants/MAX_MODEL_COUNT')
 #pragma glslify: MATL_DIFFUSE = require('./Constants/MATL_DIFFUSE');
 #pragma glslify: MATL_METAL = require('./Constants/MATL_METAL');
@@ -90,6 +91,12 @@ void main() {
     if (material.type == MATL_GLASS) {
       colorMask *= vec3(1.0) * materialWeight + (1.0 - materialWeight) * surfaceColor;
       diffuseAmount = (1.0 - materialWeight) * max(0.0, dot(jitteredLightDir, hit.normal));
+      float ior = 1.0 + material.refraction;
+      // TODO: Fresnel, should we add specular for fresnel term?
+      // float fresnelReflectance = fresnel(1.0 / ior, ray.dir, hit.normal);
+      // vec3 reflectedLight = normalize(reflect(jitteredLightDir - hit.pos, hit.normal));
+      // specularHighlight = max(0.0, dot(reflectedLight, normalize(hit.pos - ray.origin)));
+      // specularHighlight = materialWeight * fresnelReflectance * pow(specularHighlight, 3.0);
     }
     // Emmisive
     // TODO: Calibrate
@@ -120,7 +127,13 @@ void main() {
     float seed = (float(tick * 10) + float(i)) / 10000.0;
 
     // Bounce or refract
-    ray = bounceRay(ray, hit, material, models, seed);
+    Ray newRay = bounceRay(ray, hit, material, models, seed);
+    if (newRay != ray) {
+      ray = newRay;
+    }
+    else {
+      break;
+    }
   }
 
   // Ignore first render since it is interstitial render without shadows.

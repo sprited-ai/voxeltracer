@@ -9,6 +9,7 @@
 #pragma glslify: MATL_EMISSIVE = require('../Constants/MATL_EMISSIVE');
 #pragma glslify: random = require('glsl-random');
 #pragma glslify: cosineWeightedDirection = require('./cosineWeightedDirection')
+#pragma glslify: fresnel = require('./fresnel')
 #pragma glslify: uniformlyRandomVector = require('./uniformlyRandomVector')
 #pragma glslify: intersectModels = require('./intersectModels')
 
@@ -35,13 +36,29 @@ Ray bounceRay(Ray ray, Hit hit, Material material, Model[MAX_MODEL_COUNT] models
   // TODO: Roughness through sub surface scattering
   else if (material.type == MATL_GLASS && r < weight) {
     float ior = 1.0 + material.refraction;
-    ray.dir = refract(ray.dir, hit.normal, 1.0 / ior) + uniformlyRandomVector(seed) * material.roughness * 0.05;
-    ray.origin = hit.pos + ray.dir * EPSILON;
-    Hit exitHit = intersectModels(ray, models, hit.materialIndex);
-    if (exitHit.didHit) {
-      ray.dir = refract(ray.dir, exitHit.normal, ior);
-      ray.origin = exitHit.pos - ray.dir * EPSILON;
+    float fresnelReflectance = fresnel(1.0 / ior, ray.dir, hit.normal);
+    float fresnelRandom = random(vec2(seed, 0.5));
+
+    // Refraction
+    // TODO: Calibrate
+    if (fresnelRandom > fresnelReflectance) {
+      ray.dir = refract(ray.dir, hit.normal, 1.0 / ior) + uniformlyRandomVector(seed) * material.roughness * 0.08;
+      ray.origin = hit.pos + ray.dir * EPSILON;
+      Hit exitHit = intersectModels(ray, models, hit.materialIndex);
+      if (exitHit.didHit) {
+        ray.dir = refract(ray.dir, exitHit.normal, ior);
+        ray.origin = exitHit.pos - ray.dir * EPSILON;
+      }
+      else {
+        // TODO: Implement this edge case.
+      }
     }
+    // Fresnel reflection
+    else {
+      ray.dir = normalize(reflect(ray.dir, hit.normal)) + uniformlyRandomVector(seed) * material.roughness;
+      ray.origin = hit.pos + ray.dir * EPSILON;
+    }
+
   }
   // Default diffuse bounce logic
   else {
