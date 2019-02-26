@@ -34,7 +34,7 @@ Ray bounceRay(Ray ray, Hit hit, Material material, Model[MAX_MODEL_COUNT] models
   // TODO: Roughness through sub surface scattering
   else if (material.type == MATL_GLASS && r < weight) {
     float ior = 1.0 + material.refraction;
-    ray.dir = refract(ray.dir, hit.normal, 1.0 / ior);
+    ray.dir = refract(ray.dir, hit.normal, 1.0 / ior) + uniformlyRandomVector(seed) * material.roughness * 0.05;
     ray.origin = hit.pos + ray.dir * EPSILON;
     Hit exitHit = intersectModels(ray, models, hit.materialIndex);
     if (exitHit.didHit) {
