@@ -72,34 +72,37 @@ void main() {
     Material material = getMaterial(hit.materialIndex);
 
     // Components
+    float materialWeight = material.weight;
+    vec3 surfaceColor = material.color.rgb;
     float diffuseAmount = 0.0;
     float specularHighlight = 0.0;
     float emission = 0.0;
 
     // Metal
     if (material.type == MATL_METAL) {
+      colorMask *= surfaceColor;
       diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
       vec3 reflectedLight = normalize(reflect(jitteredLightDir - hit.pos, hit.normal));
       specularHighlight = max(0.0, dot(reflectedLight, normalize(hit.pos - ray.origin)));
-      specularHighlight = material.weight * material.specular * pow(specularHighlight, 3.0);
+      specularHighlight = materialWeight * material.specular * pow(specularHighlight, 3.0);
     }
     // Glass
     if (material.type == MATL_GLASS) {
-      diffuseAmount = (1.0 - material.weight) * max(0.0, dot(jitteredLightDir, hit.normal));
+      colorMask *= vec3(1.0) * materialWeight + (1.0 - materialWeight) * surfaceColor;
+      diffuseAmount = (1.0 - materialWeight) * max(0.0, dot(jitteredLightDir, hit.normal));
     }
     // Emmisive
+    // TODO: Calibrate
     else if (material.type == MATL_EMISSIVE) {
-      diffuseAmount = (1.0 - material.weight) * max(0.0, dot(jitteredLightDir, hit.normal));
-      emission = material.weight * 30.0 * material.flux;
+      colorMask *= surfaceColor;
+      diffuseAmount = (1.0 - materialWeight) * max(0.0, dot(jitteredLightDir, hit.normal));
+      emission = materialWeight * 30.0 * material.flux;
     }
     // Diffuse
     else {
+      colorMask *= surfaceColor;
       diffuseAmount = max(0.0, dot(jitteredLightDir, hit.normal));
     }
-
-    // Apply Color
-    vec3 surfaceColor = material.color.rgb;
-    colorMask *= surfaceColor;
 
     // Accumulate Colors
     // TODO: Verify mathmatical soundness.
@@ -117,7 +120,7 @@ void main() {
     float seed = (float(tick * 10) + float(i)) / 10000.0;
 
     // Bounce or refract
-    ray = bounceRay(ray, hit, material, seed);
+    ray = bounceRay(ray, hit, material, models, seed);
   }
 
   // Ignore first render since it is interstitial render without shadows.
