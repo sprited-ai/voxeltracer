@@ -31,6 +31,7 @@ Ray bounceRay(Ray ray, Hit hit, Material material, Model[MAX_MODEL_COUNT] models
   }
   // Glass refraction or reflection
   // TODO: Fresnel reflection
+  // TODO: Internal reflection
   // TODO: Roughness through sub surface scattering
   else if (material.type == MATL_GLASS && r < weight) {
     float ior = 1.0 + material.refraction;
