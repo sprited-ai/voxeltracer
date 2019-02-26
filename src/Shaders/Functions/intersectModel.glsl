@@ -12,7 +12,7 @@ const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 /**
  * Intersect model
  */
-Hit intersectModel(Ray ray, Model model) {
+Hit intersectModel(Ray ray, Model model, int mediumIndex) {
   vec3 boxMin = vec3(model.pos);
   vec3 boxMax = vec3(model.pos + model.size);
 
@@ -87,8 +87,8 @@ Hit intersectModel(Ray ray, Model model) {
       // Check voxel
       int materialIndex = voxelAt(model, cellIndex);
 
-      // Hit
-      if (materialIndex > 0) {
+      // Consider it a hit if exiting current medium (i.e. vacuum or glass)
+      if (materialIndex != mediumIndex) {
         vec3 voxMin = vec3(cellIndex + model.pos);
         vec3 voxMax = voxMin + 1.0;
         vec2 tVox = intersectBoundingBox(ray, voxMin, voxMax);

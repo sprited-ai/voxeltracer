@@ -16,7 +16,7 @@ float castShadow(vec3 pos, vec3 normal, Model models[MAX_MODEL_COUNT], vec3 ligh
       return 0.0;
     }
     Ray ray = Ray(pos + lightDir * EPSILON, lightDir);
-    Hit hit = intersectModels(ray, models);
+    Hit hit = intersectModels(ray, models, 0);
     if (hit.didHit) {
         return 0.0;
     }

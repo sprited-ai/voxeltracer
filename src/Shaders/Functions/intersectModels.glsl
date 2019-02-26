@@ -10,14 +10,14 @@ const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 /**
  * Intersect models
  */
-Hit intersectModels(Ray ray, Model models[MAX_MODEL_COUNT]) {
+Hit intersectModels(Ray ray, Model models[MAX_MODEL_COUNT], int mediumIndex) {
   Hit nearestHit = miss;
 
   // Models
   for (int i = 0; i < MAX_MODEL_COUNT; ++i) {
     Model model = models[i];
     if (model.index == -1) continue;
-    Hit hit = intersectModel(ray, models[i]);
+    Hit hit = intersectModel(ray, models[i], mediumIndex);
     if (hit.didHit) {
       if (!nearestHit.didHit || hit.t < nearestHit.t) {
         nearestHit = hit;
