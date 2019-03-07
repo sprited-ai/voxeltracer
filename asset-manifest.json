@@ -1,13 +1,13 @@
 {
   "main.css": "/voxelviewer/static/css/main.2af59d8c.chunk.css",
-  "main.js": "/voxelviewer/static/js/main.5048cbeb.chunk.js",
-  "main.js.map": "/voxelviewer/static/js/main.5048cbeb.chunk.js.map",
+  "main.js": "/voxelviewer/static/js/main.dc1d4a89.chunk.js",
+  "main.js.map": "/voxelviewer/static/js/main.dc1d4a89.chunk.js.map",
   "static/js/1.a5e8e8e9.chunk.js": "/voxelviewer/static/js/1.a5e8e8e9.chunk.js",
   "static/js/1.a5e8e8e9.chunk.js.map": "/voxelviewer/static/js/1.a5e8e8e9.chunk.js.map",
   "runtime~main.js": "/voxelviewer/static/js/runtime~main.a0ffb064.js",
   "runtime~main.js.map": "/voxelviewer/static/js/runtime~main.a0ffb064.js.map",
   "static/css/main.2af59d8c.chunk.css.map": "/voxelviewer/static/css/main.2af59d8c.chunk.css.map",
   "index.html": "/voxelviewer/index.html",
-  "precache-manifest.29428d8e9c5e53042a2242412826b182.js": "/voxelviewer/precache-manifest.29428d8e9c5e53042a2242412826b182.js",
+  "precache-manifest.f4b07ece5861961fcdfb06b2bf2a2154.js": "/voxelviewer/precache-manifest.f4b07ece5861961fcdfb06b2bf2a2154.js",
   "service-worker.js": "/voxelviewer/service-worker.js"
 }
