@@ -57,10 +57,11 @@ export default class MagicaVoxelContext extends Context {
         const size = rawSize.applyMatrix4(magicaVoxelToOpenGlCoordinates);
         size.z = -size.z;
 
+        // pivot location
         const pos = new Vector3(
-          -Math.floor(size.x / 2),
           0,
-          -Math.floor(size.z / 2)
+          0,
+          -size.z,
         );
         const model = new VoxelArt(pos, size);
         const { xyzis } = chunk;
@@ -75,7 +76,7 @@ export default class MagicaVoxelContext extends Context {
           );
           const xyz = rawXyz.applyMatrix4(magicaVoxelToOpenGlCoordinates);
           const i = xyzis[offset + 3];
-          model.setVoxel(xyz.x, xyz.y, -xyz.z, i);
+          model.setVoxel(xyz.x, xyz.y, size.z + xyz.z - 1, i);
         }
         models.push(model);
         sizeChunk = null;

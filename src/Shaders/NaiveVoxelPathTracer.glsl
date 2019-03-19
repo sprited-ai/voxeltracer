@@ -43,6 +43,10 @@ const int BOUNCE_LIMIT = 2;
 
 void main() {
 
+  // // Debug voxel texture.
+  // vec4 texelValue = texture2D(modelTexture0, vec2(uv.x, 1.0 - uv.y));
+  // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
+
   // Seed for random
   float normalizedSeed = float(tick) / float(maxTick);
 
@@ -57,6 +61,9 @@ void main() {
   Ray ray = castRay(eye, viewMatrixInverse, projectionMatrixInverse, jitteredUV);
   vec3 accumulatedColor = vec3(0.0);
   vec3 colorMask = vec3(1.0);
+
+  // // Debug ray
+  // gl_FragColor = vec4(0.0, 0.0, ray.dir.z, 1.0); return;
 
   // TODO: Bounce limit should be configurable by the user.
   for (int i = 0; i < BOUNCE_LIMIT + 1; ++i) {
