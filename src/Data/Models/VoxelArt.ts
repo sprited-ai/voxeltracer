@@ -12,7 +12,9 @@ export default class VoxelArt {
   constructor (pos: Vector3 = new Vector3(), size: Vector3 = new Vector3()) {
     this.size = size;
     this.pos = pos;
-    const numSlates = Math.ceil(size.y / 4);
+    // const numSlates = Math.ceil(size.y / 4);
+
+    const volume = size.x * size.y * size.z;
 
     let width;
     if (size.lengthSq() === 0) {
@@ -20,9 +22,7 @@ export default class VoxelArt {
     }
     else {
       for (width = 1; width < MAX_TEXTURE_WIDTH; width *= 2) {
-        const numCols = Math.floor(width / size.x);
-        const numRows = numSlates / numCols;
-        if (numCols * size.x <= width && numRows * size.z <= width) {
+        if (volume <= width * width * 4) {
           break;
         }
       }
@@ -43,15 +43,12 @@ export default class VoxelArt {
     return new Vector2(this.texture.shape[0], this.texture.shape[1]);
   }
 
-  setVoxel(x: number, y: number, z: number, i: number) {
+  setVoxel(x: number, y: number, z: number, paletteIndex: number) {
     const { size, textureSize } = this;
-    const slateIndex = Math.floor(y / 4);
-    const sliceIndex = y % 4;
-    const numCols = Math.floor(textureSize.x / size.x);
-    const col = slateIndex % numCols;
-    const row = Math.floor(slateIndex / numCols);
-    const locationX = col * size.x + x;
-    const locationY = row * size.z + z;
-    this.texture.set(locationX, locationY, sliceIndex, i);
+    const index = z * size.y * size.x + y * size.x + x;
+    const i = Math.floor(index / 4) % textureSize.x;
+    const j = Math.floor(Math.floor(index / 4) / textureSize.x);
+    const k = index % 4;
+    this.texture.set(i, j, k, paletteIndex);
   }
 }
