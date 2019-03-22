@@ -14,7 +14,8 @@ precision highp sampler2D;
 #pragma glslify: bounceRay = require('./Functions/bounceRay')
 #pragma glslify: getPreviousColor = require('./Functions/getPreviousColor')
 #pragma glslify: fresnel = require('./Functions/fresnel')
-#pragma glslify: MAX_MODEL_COUNT = require('./Constants/MAX_MODEL_COUNT')
+// #pragma glslify: models = require('./Uniforms/models')
+// #pragma glslify: MAX_MODEL_COUNT = require('./Constants/MAX_MODEL_COUNT')
 #pragma glslify: MATL_DIFFUSE = require('./Constants/MATL_DIFFUSE');
 #pragma glslify: MATL_METAL = require('./Constants/MATL_METAL');
 #pragma glslify: MATL_GLASS = require('./Constants/MATL_GLASS');
@@ -25,7 +26,7 @@ uniform vec3 eye;
 uniform vec3 lightDir;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
-uniform Model models[MAX_MODEL_COUNT];
+// uniform Model models[MAX_MODEL_COUNT];
 // uniform sampler2D previousFrameBuffer;
 // uniform sampler2D colorPaletteTexture;
 // uniform sampler2D colorTexture;
@@ -68,13 +69,13 @@ void main() {
   // TODO: Bounce limit should be configurable by the user.
   for (int i = 0; i < BOUNCE_LIMIT + 1; ++i) {
     // Trace
-    Hit hit = intersectModels(ray, models, 0);
+    Hit hit = intersectModels(ray, 0);
 
     // Break if no more hit
     if (!hit.didHit) break;
 
     // Shadow
-    float shadowMultiplier = castShadow(hit.pos, hit.normal, models, jitteredLightDir);
+    float shadowMultiplier = castShadow(hit.pos, hit.normal, jitteredLightDir);
 
     // Get material
     Material material = getMaterial(hit.materialIndex);
@@ -134,7 +135,7 @@ void main() {
     float seed = (float(tick * 10) + float(i)) / 10000.0;
 
     // Bounce or refract
-    Ray newRay = bounceRay(ray, hit, material, models, seed);
+    Ray newRay = bounceRay(ray, hit, material, seed);
     if (newRay != ray) {
       ray = newRay;
     }

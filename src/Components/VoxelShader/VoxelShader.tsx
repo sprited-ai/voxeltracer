@@ -10,7 +10,7 @@ import ColorArray from "../../Data/Arrays/ColorArray";
 import { ModelHash } from "../../Data/Types/ModelHash";
 
 // Always use one model for now.
-export const MAX_MODELS = 1;
+export const MAX_MODELS = 64;
 
 interface VoxelShaderProps {
   eye: number[];
@@ -32,6 +32,13 @@ const shaders = Shaders.create({
   }
 });
 
+const dummyModelHash: ModelHash = {
+  index: -1,
+  pos: [0,0,0],
+  size: [0,0,0],
+  byteOffset: 0
+};
+
 const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
   const {
     resolution,
@@ -49,12 +56,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
   const { shape } = packedTexture;
   const models: any[] = [];
   for (let i = 0; i < MAX_MODELS; ++i) {
-    const hash: ModelHash = modelHashes[i] || {
-      index: -1,
-      pos: [0,0,0],
-      size: [0,0,0],
-      byteOffset: 0
-    };
+    const hash: ModelHash = modelHashes[i] || dummyModelHash;
     models.push(hash);
   }
 

@@ -1,22 +1,23 @@
 #pragma glslify: Ray = require('../Structs/Ray')
 #pragma glslify: Model = require('../Structs/Model')
 #pragma glslify: Hit = require('../Structs/Hit')
+#pragma glslify: models = require('../Uniforms/models')
 #pragma glslify: intersectModels = require('./intersectModels')
-#pragma glslify: MAX_MODEL_COUNT = require('../Constants/MAX_MODEL_COUNT')
+// #pragma glslify: MAX_MODEL_COUNT = require('../Constants/MAX_MODEL_COUNT')
 
 const float EPSILON = 0.0001;
 
 /**
  * Cast Shadow
  */
-float castShadow(vec3 pos, vec3 normal, Model models[MAX_MODEL_COUNT], vec3 lightDir) {
+float castShadow(vec3 pos, vec3 normal, vec3 lightDir) {
 
     float dotProduct = dot(normal, lightDir);
     if (dotProduct <= 0.0) {
       return 0.0;
     }
     Ray ray = Ray(pos - lightDir * EPSILON, lightDir);
-    Hit hit = intersectModels(ray, models, 0);
+    Hit hit = intersectModels(ray, 0);
     if (hit.didHit) {
         return 0.0;
     }

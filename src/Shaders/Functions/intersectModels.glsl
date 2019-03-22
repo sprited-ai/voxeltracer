@@ -4,13 +4,14 @@
 #pragma glslify: intersectModel = require('../Functions/intersectModel')
 #pragma glslify: intersectGround = require('../Functions/intersectGround')
 #pragma glslify: MAX_MODEL_COUNT = require('../Constants/MAX_MODEL_COUNT')
+#pragma glslify: models = require('../Uniforms/models')
 
 const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 
 /**
  * Intersect models
  */
-Hit intersectModels(Ray ray, Model models[MAX_MODEL_COUNT], int mediumIndex) {
+Hit intersectModels(Ray ray, int mediumIndex) {
   Hit nearestHit = miss;
 
   // Models
