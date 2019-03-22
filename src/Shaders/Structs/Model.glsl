@@ -1,8 +1,8 @@
 struct Model {
   int index;
+  int byteOffset;
   ivec3 pos;
   ivec3 size;
-  ivec2 textureSize;
 };
 
 #pragma glslify: export(Model)

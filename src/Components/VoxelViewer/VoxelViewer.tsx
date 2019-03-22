@@ -10,6 +10,9 @@ import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
 import ReactTimeout from 'react-timeout'
 import ColorArray from "../../Data/Arrays/ColorArray";
+import ScenePacker from "../../Data/Packers/ScenePacker";
+import { ModelHash } from "../../Data/Types/ModelHash";
+import ndarray from "ndarray";
 
 const MAX_TICK = 1024;
 const OrbitControls = require('three-orbit-controls')(THREE);
@@ -24,11 +27,21 @@ interface VoxelViewerState {
   lightDir: Vector3;
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
-  models: VoxelArt[];
+  packedTexture: ndarray;
+  modelHashes: ModelHash[];
   materials: MaterialArray;
   colors: ColorArray;
   viewportSize: Vector2;
 }
+
+const dummyModelHash: ModelHash = {
+  index: 0,
+  pos: [0, 0, 0],
+  size: [1, 1, 1],
+  byteOffset: 0
+};
+
+const dummyPackedTexture: ndarray = ndarray(new Uint8Array(4), [1, 1, 4]);
 
 class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   // scene: Scene;
@@ -37,6 +50,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   private orbitControls?: OrbitControls;
   private loader: Loader;
   private pauseCount: number = 0;
+
 
   constructor(props: VoxelViewerProps) {
     super(props);
@@ -49,25 +63,14 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     this.scene = new VoxelScene();
 
     window.addEventListener('resize', this.onWindowResize);
-    // // Sample model.
-    // models.push(
-    //   new VoxelArt(
-    //     new Vector3(0, -2, -2),
-    //     new Vector3(4, 4, 4)
-    //   )
-    // );
-    // models.push(
-    //   new VoxelArt(
-    //     new Vector3(-4, -2, -2),
-    //     new Vector3(4, 4, 4)
-    //   )
-    // );
+
     const lightDir = new Vector3(-1.1, 1.9, 1.7);
     lightDir.normalize();
 
     const viewportSize = new Vector2(512, 512);
     this.state = {
-      models: this.scene.models,
+      modelHashes: [dummyModelHash],
+      packedTexture: dummyPackedTexture,
       materials: this.scene.materials,
       colors: this.scene.colors,
       tick: 0,
@@ -81,8 +84,11 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 
   sceneDidChange(): void {
+    const scenePacker = new ScenePacker();
+    const [modelHashes, packedTexture] = scenePacker.pack(this.scene);
     this.setState({
-      models: this.scene.models,
+      modelHashes,
+      packedTexture,
       materials: this.scene.materials,
       colors: this.scene.colors,
       tick: 0
@@ -136,8 +142,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
     // Load deafult model.
     // this.loader.loadUrl('vox/test_matl.vox').then((scene: VoxelScene) => {
-    this.loader.loadUrl('vox/pink_mini_store.vox').then((scene: VoxelScene) => {
+    // this.loader.loadUrl('vox/pink_mini_store.vox').then((scene: VoxelScene) => {
     // this.loader.loadUrl('vox/multiple.vox').then((scene: VoxelScene) => {
+    this.loader.loadUrl('vox/3x3x3.vox').then((scene: VoxelScene) => {
       this.scene = scene;
       this.sceneDidChange();
     });
@@ -223,7 +230,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
         // webglContextAttributes={{ preserveDrawingBuffer: true }}
       >
         <VoxelShader
-          models={this.state.models}
+          modelHashes={this.state.modelHashes}
+          packedTexture={this.state.packedTexture}
           colors={this.state.colors}
           materials={this.state.materials}
           tick={this.state.tick}

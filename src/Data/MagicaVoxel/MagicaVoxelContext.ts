@@ -15,6 +15,7 @@ import GlassMaterial from "../Materials/GlassMaterial";
 import MaterialType from "../../Enums/MaterialType";
 import EmmissiveMaterial from "../Materials/EmissiveMaterial";
 import DiffuseMaterial from "../Materials/DiffuseMaterial";
+import Chunk from "./Chunks/Chunk";
 
 /**
  * MagicaVoxel coordinate to OpenGL coordinate system.
@@ -38,6 +39,9 @@ export default class MagicaVoxelContext extends Context {
     const models: VoxelArt[] = [];
     const colors: ColorArray = new ColorArray();
     const materials: MaterialArray = new MaterialArray();
+
+    // Pre-scan sizes
+    const fullVolume = mainChunk.children.reduce((volume: number, chunk: Chunk) => chunk instanceof SizeChunk ? volume + chunk.x * chunk.y * chunk.z : volume, 0);
 
     // Single frame is supported.
     let sizeChunk: SizeChunk | null = null;

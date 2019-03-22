@@ -7,6 +7,7 @@ import ndarray from 'ndarray';
 import { Vector3 } from "three";
 import EnhancedNode from "./EnhancedNode";
 import ColorArray from "../../Data/Arrays/ColorArray";
+import { ModelHash } from "../../Data/Types/ModelHash";
 
 // Always use one model for now.
 export const MAX_MODELS = 1;
@@ -19,7 +20,8 @@ interface VoxelShaderProps {
   tick: number;
   maxTick: number;
   resolution: number[];
-  models: VoxelArt[];
+  modelHashes: ModelHash[];
+  packedTexture: ndarray;
   colors: ColorArray;
   materials: MaterialArray;
 }
@@ -30,22 +32,6 @@ const shaders = Shaders.create({
   }
 });
 
-const getModelHashes = function (models: VoxelArt[]): any[] {
-  const nullModel = new VoxelArt();
-  const modelHashes = [];
-  for (let i = 0; i < MAX_MODELS; ++i) {
-    const model = models && models[i] || nullModel;
-    const index = model === nullModel ? -1 : i;
-    modelHashes.push({
-      index,
-      pos: model.pos.toArray(),
-      size: model.size.toArray(),
-      textureSize: model.textureSize.toArray(),
-    });
-  }
-  return modelHashes;
-};
-
 const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
   const {
     resolution,
@@ -54,11 +40,24 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     projectionMatrixInverse,
     tick,
     maxTick,
-    models,
+    modelHashes,
+    packedTexture,
     colors,
     materials,
     lightDir
   } = props;
+  const { shape } = packedTexture;
+  const models: any[] = [];
+  for (let i = 0; i < MAX_MODELS; ++i) {
+    const hash: ModelHash = modelHashes[i] || {
+      index: -1,
+      pos: [0,0,0],
+      size: [0,0,0],
+      byteOffset: 0
+    };
+    models.push(hash);
+  }
+
   const uniforms: any = {
     eye,
     tick,
@@ -67,12 +66,17 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     resolution,
     lightDir: lightDir.toArray(),
     projectionMatrixInverse,
-    models: getModelHashes(models),
+    models,
+    packedTextureSize: [shape[0], shape[1]],
+    packedTexture: packedTexture,
     colorTexture: colors.colorTexture,
     materialTexture: materials.materialTexture,
     previousFrameBuffer: Uniform.Backbuffer
   };
   const uniformsOptions: any = {
+    packedTexture: {
+      interpolation: 'nearest'
+    },
     colorTexture: {
       interpolation: 'nearest'
     },
@@ -83,14 +87,6 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
       interpolation: 'nearest'
     }
   };
-  for (let i = 0; i < MAX_MODELS; ++i) {
-    const model = models[i];
-    let texture = model ? model.texture : ndarray(new Uint8Array(4), [1, 1, 4]);
-    uniforms[`modelTexture${i}`] = texture;
-    uniformsOptions[`modelTexture${i}`] = {
-      interpolation: 'nearest'
-    };
-  }
   return (
     <NearestCopy>
       <EnhancedNode
