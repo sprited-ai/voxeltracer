@@ -142,9 +142,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
     // Load deafult model.
     // this.loader.loadUrl('vox/test_matl.vox').then((scene: VoxelScene) => {
-    // this.loader.loadUrl('vox/pink_mini_store.vox').then((scene: VoxelScene) => {
+    this.loader.loadUrl('vox/pink_mini_store.vox').then((scene: VoxelScene) => {
     // this.loader.loadUrl('vox/multiple.vox').then((scene: VoxelScene) => {
-    this.loader.loadUrl('vox/3x3x3.vox').then((scene: VoxelScene) => {
+    // this.loader.loadUrl('vox/3x3x3.vox').then((scene: VoxelScene) => {
       this.scene = scene;
       this.sceneDidChange();
     });

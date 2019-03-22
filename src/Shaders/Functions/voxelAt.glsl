@@ -8,7 +8,11 @@ int voxelAt(Model model, ivec3 cellIndex) {
 
   ivec3 size = model.size;
   int index = model.byteOffset + cellIndex.z * size.y * size.x + cellIndex.y * size.x + cellIndex.x;
-  ivec2 texelPos = ivec2(mod(index / 4, packedTextureSize.x), (index / 4) / packedTextureSize.x);
+  // Note that packed texture has x, y flipped.
+  ivec2 texelPos = ivec2(
+    (index / 4) / packedTextureSize.x,
+    mod(index / 4, packedTextureSize.x)
+  );
   int componentIndex = mod(index, 4);
   vec2 uv = (vec2(texelPos) + 0.5) / vec2(packedTextureSize);
   vec2 flippedUV = vec2(uv.x, 1.0 - uv.y);
