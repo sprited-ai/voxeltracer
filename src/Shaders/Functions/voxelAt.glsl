@@ -18,9 +18,7 @@ int voxelAt(Model model, ivec3 cellIndex) {
   vec2 flippedUV = vec2(uv.x, 1.0 - uv.y);
   vec4 texelValue;
   float value;
-  if (model.index == 0) {
-    texelValue = texture2D(packedTexture, flippedUV);
-  }
+  texelValue = texture2D(packedTexture, flippedUV);
   // Select the right slice
   if (componentIndex == 0) {
     value = texelValue.r;

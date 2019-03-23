@@ -18,7 +18,7 @@ Hit intersectModels(Ray ray, int mediumIndex) {
   for (int i = 0; i < MAX_MODEL_COUNT; ++i) {
     Model model = models[i];
     if (model.index == -1) continue;
-    Hit hit = intersectModel(ray, models[i], mediumIndex);
+    Hit hit = intersectModel(ray, model, mediumIndex);
     if (hit.didHit) {
       if (!nearestHit.didHit || hit.t < nearestHit.t) {
         nearestHit = hit;
