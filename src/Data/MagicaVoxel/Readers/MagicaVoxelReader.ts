@@ -75,7 +75,7 @@ export default class MagicaVoxelReader extends Reader {
       this.readInt(),
       this.readInt()
     );
-    console.log(result);
+    // console.log(result);
     return result;
   }
 
