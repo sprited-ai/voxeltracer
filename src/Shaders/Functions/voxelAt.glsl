@@ -1,13 +1,10 @@
-#pragma glslify: Model = require('../Structs/Model')
 #pragma glslify: mod = require('../Functions/mod')
 
 uniform sampler2D packedTexture;
 uniform ivec2 packedTextureSize;
 
-int voxelAt(Model model, ivec3 cellIndex) {
-
-  ivec3 size = model.size;
-  int index = model.byteOffset + cellIndex.z * size.y * size.x + cellIndex.y * size.x + cellIndex.x;
+int voxelAt(ivec3 size, int byteOffset, ivec3 cellIndex) {
+  int index = byteOffset + cellIndex.z * size.y * size.x + cellIndex.y * size.x + cellIndex.x;
   // Note that packed texture has x, y flipped.
   ivec2 texelPos = ivec2(
     (index / 4) / packedTextureSize.x,

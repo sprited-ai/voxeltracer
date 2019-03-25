@@ -1,24 +1,24 @@
 #pragma glslify: Ray = require('../Structs/Ray')
 #pragma glslify: Hit = require('../Structs/Hit')
-#pragma glslify: Model = require('../Structs/Model')
-#pragma glslify: intersectModel = require('../Functions/intersectModel')
+#pragma glslify: Shape = require('../Structs/Shape')
+#pragma glslify: intersectShape = require('../Functions/intersectShape')
 #pragma glslify: intersectGround = require('../Functions/intersectGround')
-#pragma glslify: MAX_MODEL_COUNT = require('../Constants/MAX_MODEL_COUNT')
-#pragma glslify: models = require('../Uniforms/models')
+#pragma glslify: MAX_SHAPE_COUNT = require('../Constants/MAX_SHAPE_COUNT')
+#pragma glslify: shapes = require('../Uniforms/shapes')
 
 const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 
 /**
- * Intersect models
+ * Intersect shapes
  */
-Hit intersectModels(Ray ray, int mediumIndex) {
+Hit intersectShapes(Ray ray, int mediumIndex) {
   Hit nearestHit = miss;
 
-  // Models
-  for (int i = 0; i < MAX_MODEL_COUNT; ++i) {
-    Model model = models[i];
-    if (model.index == -1) continue;
-    Hit hit = intersectModel(ray, model, mediumIndex);
+  // Shapes
+  for (int i = 0; i < MAX_SHAPE_COUNT; ++i) {
+    Shape shape = shapes[i];
+    if (shape.modelIndex == -1) continue;
+    Hit hit = intersectShape(ray, shape, mediumIndex);
     if (hit.didHit) {
       if (!nearestHit.didHit || hit.t < nearestHit.t) {
         nearestHit = hit;
@@ -37,4 +37,4 @@ Hit intersectModels(Ray ray, int mediumIndex) {
   return nearestHit;
 }
 
-#pragma glslify: export(intersectModels)
+#pragma glslify: export(intersectShapes)

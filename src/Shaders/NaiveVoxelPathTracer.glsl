@@ -1,7 +1,6 @@
 precision highp float;
 precision highp sampler2D;
 
-#pragma glslify: Model = require('./Structs/Model')
 #pragma glslify: Ray = require('./Structs/Ray')
 #pragma glslify: Hit = require('./Structs/Hit')
 #pragma glslify: Material = require('./Structs/Material')
@@ -10,12 +9,10 @@ precision highp sampler2D;
 #pragma glslify: castShadow = require('./Functions/castShadow')
 #pragma glslify: jitterUV = require('./Functions/jitterUV')
 #pragma glslify: jitterLightDir = require('./Functions/jitterLightDir')
-#pragma glslify: intersectModels = require('./Functions/intersectModels')
+#pragma glslify: intersectShapes = require('./Functions/intersectShapes')
 #pragma glslify: bounceRay = require('./Functions/bounceRay')
 #pragma glslify: getPreviousColor = require('./Functions/getPreviousColor')
 #pragma glslify: fresnel = require('./Functions/fresnel')
-// #pragma glslify: models = require('./Uniforms/models')
-// #pragma glslify: MAX_MODEL_COUNT = require('./Constants/MAX_MODEL_COUNT')
 #pragma glslify: MATL_DIFFUSE = require('./Constants/MATL_DIFFUSE');
 #pragma glslify: MATL_METAL = require('./Constants/MATL_METAL');
 #pragma glslify: MATL_GLASS = require('./Constants/MATL_GLASS');
@@ -26,16 +23,10 @@ uniform vec3 eye;
 uniform vec3 lightDir;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
-// uniform Model models[MAX_MODEL_COUNT];
 // uniform sampler2D previousFrameBuffer;
 // uniform sampler2D colorPaletteTexture;
 // uniform sampler2D colorTexture;
 // uniform sampler2D materialTexture;
-// uniform int modelCount;
-// uniform sampler2D modelTexture0;
-// uniform ivec3 modelPos;
-// uniform ivec3 modelSize;
-// uniform ivec2 modelTextureSize;
 uniform int tick;
 uniform int maxTick;
 uniform ivec2 resolution;
@@ -69,7 +60,7 @@ void main() {
   // TODO: Bounce limit should be configurable by the user.
   for (int i = 0; i < BOUNCE_LIMIT + 1; ++i) {
     // Trace
-    Hit hit = intersectModels(ray, 0);
+    Hit hit = intersectShapes(ray, 0);
 
     // Break if no more hit
     if (!hit.didHit) break;

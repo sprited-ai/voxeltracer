@@ -4,15 +4,14 @@ import { PerspectiveCamera, Vector3, Vector2 } from "three";
 import { Surface } from "gl-react-dom";
 import VoxelShader from '../VoxelShader/VoxelShader';
 import ReactAnimationFrame from 'react-animation-frame';
-import VoxelArt from "../../Data/Models/VoxelArt";
 import MaterialArray from "../../Data/Arrays/MaterialArray";
 import VoxelScene from "../../Data/Models/VoxelScene";
 import Loader from "../../Data/Loaders/Loader";
 import ReactTimeout from 'react-timeout'
 import ColorArray from "../../Data/Arrays/ColorArray";
 import ScenePacker from "../../Data/Packers/ScenePacker";
-import { ModelHash } from "../../Data/Types/ModelHash";
 import ndarray from "ndarray";
+import ShapeHash from "../../Data/Types/ShapeHash";
 
 const MAX_TICK = 1024;
 const OrbitControls = require('three-orbit-controls')(THREE);
@@ -28,18 +27,11 @@ interface VoxelViewerState {
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
   packedTexture: ndarray;
-  modelHashes: ModelHash[];
+  shapeHashes: ShapeHash[];
   materials: MaterialArray;
   colors: ColorArray;
   viewportSize: Vector2;
 }
-
-const dummyModelHash: ModelHash = {
-  index: 0,
-  pos: [0, 0, 0],
-  size: [1, 1, 1],
-  byteOffset: 0
-};
 
 const dummyPackedTexture: ndarray = ndarray(new Uint8Array(4), [1, 1, 4]);
 
@@ -69,7 +61,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
     const viewportSize = new Vector2(512, 512);
     this.state = {
-      modelHashes: [dummyModelHash],
+      shapeHashes: [],
       packedTexture: dummyPackedTexture,
       materials: this.scene.materials,
       colors: this.scene.colors,
@@ -85,9 +77,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   sceneDidChange(): void {
     const scenePacker = new ScenePacker();
-    const [modelHashes, packedTexture] = scenePacker.pack(this.scene);
+    const [shapeHashes, packedTexture] = scenePacker.pack(this.scene);
     this.setState({
-      modelHashes,
+      shapeHashes,
       packedTexture,
       materials: this.scene.materials,
       colors: this.scene.colors,
@@ -230,7 +222,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
         // webglContextAttributes={{ preserveDrawingBuffer: true }}
       >
         <VoxelShader
-          modelHashes={this.state.modelHashes}
+          shapeHashes={this.state.shapeHashes}
           packedTexture={this.state.packedTexture}
           colors={this.state.colors}
           materials={this.state.materials}

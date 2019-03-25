@@ -1,9 +1,6 @@
 #pragma glslify: Ray = require('../Structs/Ray')
 #pragma glslify: Material = require('../Structs/Material')
-#pragma glslify: Model = require('../Structs/Model')
 #pragma glslify: Hit = require('../Structs/Hit')
-#pragma glslify: models = require('../Uniforms/models')
-// #pragma glslify: MAX_MODEL_COUNT = require('../Constants/MAX_MODEL_COUNT')
 #pragma glslify: MATL_DIFFUSE = require('../Constants/MATL_DIFFUSE');
 #pragma glslify: MATL_METAL = require('../Constants/MATL_METAL');
 #pragma glslify: MATL_GLASS = require('../Constants/MATL_GLASS');
@@ -12,7 +9,7 @@
 #pragma glslify: cosineWeightedDirection = require('./cosineWeightedDirection')
 #pragma glslify: fresnel = require('./fresnel')
 #pragma glslify: uniformlyRandomVector = require('./uniformlyRandomVector')
-#pragma glslify: intersectModels = require('./intersectModels')
+#pragma glslify: intersectShapes = require('./intersectShapes')
 
 const float EPSILON = 0.0001;
 
@@ -45,7 +42,7 @@ Ray bounceRay(Ray ray, Hit hit, Material material, float seed) {
     if (fresnelRandom > fresnelReflectance) {
       ray.dir = refract(ray.dir, hit.normal, 1.0 / ior) + uniformlyRandomVector(seed) * material.roughness * 0.08;
       ray.origin = hit.pos + ray.dir * EPSILON;
-      Hit exitHit = intersectModels(ray, hit.materialIndex);
+      Hit exitHit = intersectShapes(ray, hit.materialIndex);
       if (exitHit.didHit) {
         ray.dir = refract(ray.dir, exitHit.normal, ior);
         ray.origin = exitHit.pos - ray.dir * EPSILON;

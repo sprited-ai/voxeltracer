@@ -1,20 +1,26 @@
 #pragma glslify: Ray = require('../Structs/Ray')
 #pragma glslify: Hit = require('../Structs/Hit')
-#pragma glslify: Model = require('../Structs/Model')
+#pragma glslify: Shape = require('../Structs/Shape')
 #pragma glslify: mod = require('../Functions/mod')
 #pragma glslify: voxelAt = require('../Functions/voxelAt')
 #pragma glslify: intersectBoundingBox = require('./intersectBoundingBox')
+#pragma glslify: shapes = require('../Uniforms/shapes')
 
 const float EPSILON = 0.0001;
 const int ITERATION_LIMIT = 400;
 const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 
 /**
- * Intersect model
+ * Intersect shape
  */
-Hit intersectModel(Ray ray, Model model, int mediumIndex) {
-  vec3 boxMin = vec3(model.pos);
-  vec3 boxMax = vec3(model.pos + model.size);
+Hit intersectShape(Ray ray, Shape shape, int mediumIndex) {
+  mat4 transform = shape.transform;
+  vec3 boxMin = vec3(shape.pos);
+  vec3 boxMax = vec3(shape.pos + shape.size);
+
+  // Transform ray.
+  ray.dir = (transform * vec4(ray.dir, 0.0)).xyz;
+  ray.origin = (transform * vec4(ray.origin, 1.0)).xyz;
 
   // Intersect BB
   vec2 tBox = intersectBoundingBox(ray, boxMin, boxMax);
@@ -78,18 +84,18 @@ Hit intersectModel(Ray ray, Model model, int mediumIndex) {
     }
 
     // If some condition is met break from the loop (allow one extra padding)
-    if (any(lessThan(cellIndex, ivec3(0) - 1)) || any(greaterThanEqual(cellIndex, ivec3(model.size) + 1))){
+    if (any(lessThan(cellIndex, ivec3(0) - 1)) || any(greaterThanEqual(cellIndex, ivec3(shape.size) + 1))){
       break;
     }
     // If within bound, then texture lookup.
-    else if (all(greaterThanEqual(cellIndex, ivec3(0))) && all(lessThan(cellIndex, ivec3(model.size)))) {
+    else if (all(greaterThanEqual(cellIndex, ivec3(0))) && all(lessThan(cellIndex, ivec3(shape.size)))) {
 
       // Check voxel
-      int materialIndex = voxelAt(model, cellIndex);
+      int materialIndex = voxelAt(shape.size, shape.byteOffset, cellIndex);
 
       // Consider it a hit if exiting current medium (i.e. vacuum or glass)
       if (materialIndex != mediumIndex) {
-        vec3 voxMin = vec3(cellIndex + model.pos);
+        vec3 voxMin = vec3(cellIndex + shape.pos);
         vec3 voxMax = voxMin + 1.0;
         vec2 tVox = intersectBoundingBox(ray, voxMin, voxMax);
         float hitT = tVox.x;
@@ -102,4 +108,4 @@ Hit intersectModel(Ray ray, Model model, int mediumIndex) {
   return miss;
 }
 
-#pragma glslify: export(intersectModel)
+#pragma glslify: export(intersectShape)

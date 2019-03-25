@@ -1,16 +1,14 @@
 import React from "react";
 import { Shaders, GLSL, Uniform, NearestCopy } from "gl-react";
 import NaiveVoxelPathTracer from '../../Shaders/NaiveVoxelPathTracer.glsl';
-import VoxelArt from '../../Data/Models/VoxelArt';
 import MaterialArray from "../../Data/Arrays/MaterialArray";
 import ndarray from 'ndarray';
-import { Vector3 } from "three";
+import { Vector3, Matrix4 } from "three";
 import EnhancedNode from "./EnhancedNode";
 import ColorArray from "../../Data/Arrays/ColorArray";
-import { ModelHash } from "../../Data/Types/ModelHash";
+import ShapeHash from "../../Data/Types/ShapeHash";
 
-// Always use one model for now.
-export const MAX_MODELS = 64;
+export const MAX_SHAPES = 64;
 
 interface VoxelShaderProps {
   eye: number[];
@@ -20,7 +18,7 @@ interface VoxelShaderProps {
   tick: number;
   maxTick: number;
   resolution: number[];
-  modelHashes: ModelHash[];
+  shapeHashes: ShapeHash[];
   packedTexture: ndarray;
   colors: ColorArray;
   materials: MaterialArray;
@@ -32,10 +30,11 @@ const shaders = Shaders.create({
   }
 });
 
-const dummyModelHash: ModelHash = {
-  index: -1,
-  pos: [0,0,0],
-  size: [0,0,0],
+const nullShapeHash: ShapeHash = {
+  modelIndex: -1,
+  transform: (new Matrix4()).toArray(),
+  pos: [0, 0, 0],
+  size: [0, 0, 0],
   byteOffset: 0
 };
 
@@ -47,17 +46,17 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     projectionMatrixInverse,
     tick,
     maxTick,
-    modelHashes,
+    shapeHashes,
     packedTexture,
     colors,
     materials,
     lightDir
   } = props;
-  const { shape } = packedTexture;
-  const models: any[] = [];
-  for (let i = 0; i < MAX_MODELS; ++i) {
-    const hash: ModelHash = modelHashes[i] || dummyModelHash;
-    models.push(hash);
+
+  const shapes: any[] = [];
+  for (let i = 0; i < MAX_SHAPES; ++i) {
+    const hash: ShapeHash = shapeHashes[i] || nullShapeHash;
+    shapes.push(hash);
   }
 
   const uniforms: any = {
@@ -68,8 +67,8 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     resolution,
     lightDir: lightDir.toArray(),
     projectionMatrixInverse,
-    models,
-    packedTextureSize: [shape[0], shape[1]],
+    shapes,
+    packedTextureSize: [packedTexture.shape[0], packedTexture.shape[1]],
     packedTexture: packedTexture,
     colorTexture: colors.colorTexture,
     materialTexture: materials.materialTexture,

@@ -8,7 +8,7 @@ const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
 const int groundMaterialIndex = 1;
 
 /**
- * Intersect models
+ * Intersect ground
  */
 Hit intersectGround(Ray ray) {
 
