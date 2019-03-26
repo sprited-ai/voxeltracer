@@ -48,8 +48,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     super(props);
     // this.scene = new Scene();
     this.camera = new PerspectiveCamera(60, 1, 0.01, 1000);
-    this.camera.position.set(0, 0, 100);
-    this.camera.lookAt(new Vector3(0, 0, 0));
+    this.camera.position.set(0, 50, 100);
+    this.camera.lookAt(new Vector3(0, 30, 0));
 
     this.loader = new Loader();
     this.scene = new VoxelScene();
@@ -134,8 +134,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
     // Load deafult model.
     // this.loader.loadUrl('vox/test_matl.vox').then((scene: VoxelScene) => {
-    // this.loader.loadUrl('vox/pink_mini_store.vox').then((scene: VoxelScene) => {
-    this.loader.loadUrl('vox/multiple.vox').then((scene: VoxelScene) => {
+    this.loader.loadUrl('vox/pink_mini_store.vox').then((scene: VoxelScene) => {
+    // this.loader.loadUrl('vox/japanese_house_interior.vox').then((scene: VoxelScene) => {
+    // this.loader.loadUrl('vox/multiple.vox').then((scene: VoxelScene) => {
     // this.loader.loadUrl('vox/3x3x3.vox').then((scene: VoxelScene) => {
       this.scene = scene;
       this.sceneDidChange();
