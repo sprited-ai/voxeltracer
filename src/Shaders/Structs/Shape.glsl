@@ -1,9 +1,8 @@
 struct Shape {
   int modelIndex;
   int byteOffset;
-  // TODO: Passing two matrices are quite expansive. Let's fine another way.
-  mat4 modelMatrix;
-  mat4 invertedModelMatrix;
+  mat3 rotation;
+  ivec3 translation;
   ivec3 size;
   ivec3 pos;
 };

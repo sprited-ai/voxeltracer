@@ -4479,6 +4479,11 @@ glsl-tokenizer@^2.0.0, glsl-tokenizer@^2.0.2:
   dependencies:
     through2 "^0.6.3"
 
+glsl-transpose@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/glsl-transpose/-/glsl-transpose-1.0.0.tgz#63a44a24826eafbc7807d7c6cd1d591c0196ae90"
+  integrity sha1-Y6RKJIJur7x4B9fGzR1ZHAGWrpA=
+
 glslify-bundle@^5.0.0:
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/glslify-bundle/-/glslify-bundle-5.1.1.tgz#30d2ddf2e6b935bf44d1299321e3b729782c409a"

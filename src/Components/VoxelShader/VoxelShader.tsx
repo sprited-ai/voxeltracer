@@ -3,7 +3,7 @@ import { Shaders, GLSL, Uniform, NearestCopy } from "gl-react";
 import NaiveVoxelPathTracer from '../../Shaders/NaiveVoxelPathTracer.glsl';
 import MaterialArray from "../../Data/Arrays/MaterialArray";
 import ndarray from 'ndarray';
-import { Vector3, Matrix4 } from "three";
+import { Vector3, Matrix4, Matrix3 } from "three";
 import EnhancedNode from "./EnhancedNode";
 import ColorArray from "../../Data/Arrays/ColorArray";
 import ShapeHash from "../../Data/Types/ShapeHash";
@@ -32,10 +32,10 @@ const shaders = Shaders.create({
 
 const nullShapeHash: ShapeHash = {
   modelIndex: -1,
-  modelMatrix: (new Matrix4()).toArray(),
-  invertedModelMatrix: (new Matrix4()).toArray(),
-  pos: [0, 0, 0],
-  size: [0, 0, 0],
+  rotation: (new Matrix3()).toArray(),
+  translation: (new Vector3()).toArray(),
+  pos: (new Vector3()).toArray(),
+  size: (new Vector3()).toArray(),
   byteOffset: 0
 };
 

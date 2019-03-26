@@ -5,6 +5,7 @@
 #pragma glslify: voxelAt = require('../Functions/voxelAt')
 #pragma glslify: intersectBoundingBox = require('./intersectBoundingBox')
 #pragma glslify: shapes = require('../Uniforms/shapes')
+#pragma glslify: transpose = require('glsl-transpose')
 
 const float EPSILON = 0.0001;
 const int ITERATION_LIMIT = 400;
@@ -14,16 +15,20 @@ const Hit miss = Hit(false, 0.0, vec3(0.0), vec3(0.0), 0);
  * Intersect shape
  */
 Hit intersectShape(Ray ray, Shape shape, int mediumIndex) {
-  mat4 invertedModelMatrix = shape.invertedModelMatrix;
   vec3 boxMin = vec3(shape.pos);
   vec3 boxMax = vec3(shape.pos + shape.size);
 
   // Keep original ray
   Ray originalRay = ray;
 
-  // Transform ray.
-  ray.dir = (invertedModelMatrix * vec4(ray.dir, 0.0)).xyz;
-  ray.origin = (invertedModelMatrix * vec4(ray.origin, 1.0)).xyz;
+  // Transform ray using inverse model transformation.
+  // Model = Translation * Rotation
+  // inverse(Model) = inverse(Rotation) * inverse(Translation)
+  // where inverse(Rotation) = transpose(Rotation) since it is orthogonal.
+  // TODO: Check the performance of transposing a 3x3 matrix.
+  mat3 inverseRotation = transpose(shape.rotation);
+  ray.dir = inverseRotation * ray.dir;
+  ray.origin = inverseRotation * (ray.origin - vec3(shape.translation));
 
   // Intersect BB
   vec2 tBox = intersectBoundingBox(ray, boxMin, boxMax);
@@ -103,7 +108,7 @@ Hit intersectShape(Ray ray, Shape shape, int mediumIndex) {
         vec2 tVox = intersectBoundingBox(ray, voxMin, voxMax);
         float hitT = tVox.x;
         vec3 hitPos = originalRay.origin + originalRay.dir * hitT;
-        vec3 hitNormal = (shape.modelMatrix * vec4(normal, 0.0)).xyz;
+        vec3 hitNormal = shape.rotation * normal;
         return Hit(true, hitT, hitPos, hitNormal, materialIndex);
       }
     }

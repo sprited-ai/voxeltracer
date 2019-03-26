@@ -2,7 +2,7 @@ import VoxelScene from "../Models/VoxelScene";
 import ndarray from "ndarray";
 import VoxelArt from "../Models/VoxelArt";
 import Obj from "../Models/Obj";
-import { Matrix4, Vector3 } from "three";
+import { Matrix4, Vector3, Matrix3 } from "three";
 import ShapeHash from "../Types/ShapeHash"
 
 // iOS 12.1 (16B91) Simulator's max is 4096.
@@ -24,26 +24,23 @@ function getTextureWidth(scene: VoxelScene): number {
   return width;
 }
 
-function invertModelMatrix(modelMatrix: Matrix4): Matrix4 {
-  // Model = Translation * Rotation
-  // inverse(Model) = inverse(Rotation) * inverse(Translation)
-  // where inverse(Rotation) = transpose(Rotation) since it is orthogonal
-  // and where inverse(Translation) = Translation.
-  const invertedTranslationMatrix = (new Matrix4()).setPosition(new Vector3(
-    - modelMatrix.elements[12],
-    - modelMatrix.elements[13],
-    - modelMatrix.elements[14]
-  ));
-  const invertedRotationMatrix = (new Matrix4()).extractRotation(modelMatrix).transpose();
-  const invertedModelMatrix = (new Matrix4()).multiplyMatrices(invertedRotationMatrix, invertedTranslationMatrix);
-  return invertedModelMatrix;
+function decomposeModelMatrix(modelMatrix: Matrix4): [Matrix3, Vector3] {
+  const translation: Vector3 = new Vector3(
+    modelMatrix.elements[12],
+    modelMatrix.elements[13],
+    modelMatrix.elements[14]
+  );
+  // TODO: Check what happens for flips
+  // TODO: Make sure it is okay to assume no scaling.
+  const rotation: Matrix3 = (new Matrix3()).setFromMatrix4((new Matrix4()).extractRotation(modelMatrix));
+  return [rotation, translation];
 }
 
 function getShapeHashes(obj: Obj, models: VoxelArt[], byteOffsets: number[], parentTransform: Matrix4 = new Matrix4()): ShapeHash[] {
   const { modelIndex, hidden } = obj;
   const modelMatrix: Matrix4 = parentTransform.clone().multiply(obj.transform);
-  const invertedModelMatrix: Matrix4 = invertModelMatrix(modelMatrix);
   const shapeHashes: ShapeHash[] = [];
+  const [rotation, translation] = decomposeModelMatrix(modelMatrix);
   if (!hidden) {
     if (modelIndex !== -1) {
       const model = models[modelIndex];
@@ -52,8 +49,8 @@ function getShapeHashes(obj: Obj, models: VoxelArt[], byteOffsets: number[], par
       const byteOffset = byteOffsets[modelIndex];
       shapeHashes.push({
         modelIndex,
-        modelMatrix: modelMatrix.toArray(),
-        invertedModelMatrix: invertedModelMatrix.toArray(),
+        rotation: rotation.toArray(),
+        translation: translation.toArray(),
         size,
         pos,
         byteOffset
