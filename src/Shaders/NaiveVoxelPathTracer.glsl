@@ -17,10 +17,14 @@ precision highp sampler2D;
 #pragma glslify: MATL_METAL = require('./Constants/MATL_METAL');
 #pragma glslify: MATL_GLASS = require('./Constants/MATL_GLASS');
 #pragma glslify: MATL_EMISSIVE = require('./Constants/MATL_EMISSIVE');
+#pragma glslify: GROUND_MATERIAL_INDEX = require('./Constants/GROUND_MATERIAL_INDEX');
 
 varying vec2 uv;
 uniform vec3 eye;
 uniform vec3 lightDir;
+uniform vec3 lightColor;
+uniform vec3 skyColor;
+uniform vec3 groundColor;
 uniform mat4 viewMatrixInverse;
 uniform mat4 projectionMatrixInverse;
 // uniform sampler2D previousFrameBuffer;
@@ -33,7 +37,19 @@ uniform ivec2 resolution;
 
 const int BOUNCE_LIMIT = 2;
 
+
 void main() {
+
+  Material groundMaterial = Material(
+    MATL_DIFFUSE,
+    vec4(groundColor, 1.0),
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  );
 
   // // Debug voxel texture.
   // vec4 texelValue = texture2D(modelTexture0, vec2(uv.x, 1.0 - uv.y));
@@ -54,6 +70,8 @@ void main() {
   vec3 accumulatedColor = vec3(0.0);
   vec3 colorMask = vec3(1.0);
 
+  vec3 calibratedLightColor = lightColor * 2.0;
+
   // // Debug ray
   // gl_FragColor = vec4(0.0, 0.0, ray.dir.z, 1.0); return;
 
@@ -62,14 +80,24 @@ void main() {
     // Trace
     Hit hit = intersectShapes(ray, 0);
 
-    // Break if no more hit
-    if (!hit.didHit) break;
+    // Break if no more hit after adding sky color
+    if (!hit.didHit) {
+      // TODO: Mathmatical correctness?
+      accumulatedColor += colorMask * skyColor;
+      break;
+    }
 
     // Shadow
     float shadowMultiplier = castShadow(hit.pos, hit.normal, jitteredLightDir);
 
     // Get material
-    Material material = getMaterial(hit.materialIndex);
+    Material material;
+    if (hit.materialIndex == GROUND_MATERIAL_INDEX) {
+      material = groundMaterial;
+    }
+    else {
+      material = getMaterial(hit.materialIndex);
+    }
 
     // Components
     float materialWeight = material.weight;
@@ -114,7 +142,7 @@ void main() {
     // TODO: Verify mathmatical soundness.
     // TODO: Seems to be overdosing diffuse on metal shaders.
     accumulatedColor += colorMask * diffuseAmount * shadowMultiplier;
-    accumulatedColor += colorMask * specularHighlight * shadowMultiplier;
+    accumulatedColor += colorMask * specularHighlight * calibratedLightColor * shadowMultiplier;
     accumulatedColor += colorMask * emission;
 
     // First slide will have no indirect lighting
