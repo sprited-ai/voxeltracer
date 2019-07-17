@@ -3,7 +3,7 @@ import { Shaders, GLSL, Uniform, NearestCopy } from "gl-react";
 import NaiveVoxelPathTracer from '../../Shaders/NaiveVoxelPathTracer.glsl';
 import MaterialArray from "../../Data/Arrays/MaterialArray";
 import ndarray from 'ndarray';
-import { Vector3, Matrix4, Matrix3 } from "three";
+import { Vector3, Matrix4, Matrix3, Color } from "three";
 import EnhancedNode from "./EnhancedNode";
 import ColorArray from "../../Data/Arrays/ColorArray";
 import ShapeHash from "../../Data/Types/ShapeHash";
@@ -13,6 +13,9 @@ export const MAX_SHAPES = 64;
 interface VoxelShaderProps {
   eye: number[];
   lightDir: Vector3;
+  skyColor: Color;
+  lightColor: Color;
+  groundColor: Color;
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
   tick: number;
@@ -51,7 +54,10 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     packedTexture,
     colors,
     materials,
-    lightDir
+    lightDir,
+    lightColor,
+    groundColor,
+    skyColor
   } = props;
 
   const shapes: any[] = [];
@@ -67,6 +73,9 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
     viewMatrixInverse,
     resolution,
     lightDir: lightDir.toArray(),
+    lightColor: lightColor.toArray(),
+    groundColor: groundColor.toArray(),
+    skyColor: skyColor.toArray(),
     projectionMatrixInverse,
     shapes,
     packedTextureSize: [packedTexture.shape[0], packedTexture.shape[1]],

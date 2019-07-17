@@ -1,6 +1,6 @@
 import React from "react";
 import * as THREE from 'three';
-import { PerspectiveCamera, Vector3, Vector2 } from "three";
+import { PerspectiveCamera, Vector3, Vector2, Color } from "three";
 import { Surface } from "gl-react-dom";
 import VoxelShader from '../VoxelShader/VoxelShader';
 import ReactAnimationFrame from 'react-animation-frame';
@@ -24,6 +24,9 @@ interface VoxelViewerState {
   tick: number;
   eye: number[];
   lightDir: Vector3;
+  lightColor: Color;
+  skyColor: Color;
+  groundColor: Color;
   viewMatrixInverse: Float32Array;
   projectionMatrixInverse: Float32Array;
   packedTexture: ndarray;
@@ -68,6 +71,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       tick: 0,
       viewportSize,
       lightDir: lightDir,
+      lightColor: new Color(),
+      skyColor: new Color(),
+      groundColor: new Color(),
       eye: this.camera.position.toArray(),
       viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
@@ -83,6 +89,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       packedTexture,
       materials: this.scene.materials,
       colors: this.scene.colors,
+      groundColor: this.scene.groundColor,
+      skyColor: this.scene.skyColor,
+      lightColor: this.scene.lightColor,
       tick: 0
     });
     this.restartAnimation();
@@ -232,6 +241,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
           resolution={resolution}
           eye={this.state.eye}
           lightDir={this.state.lightDir}
+          lightColor={this.state.lightColor}
+          groundColor={this.state.groundColor}
+          skyColor={this.state.skyColor}
           viewMatrixInverse={this.state.viewMatrixInverse}
           projectionMatrixInverse={this.state.projectionMatrixInverse}
         />

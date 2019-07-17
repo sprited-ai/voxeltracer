@@ -85,8 +85,22 @@ export default class MagicaVoxelContext extends Context {
     const rootObj: Obj = this.parseNodeChunks(chunkMap);
     const colors = this.parseRgbaChunk(rgbaChunk);
     const materials = this.parseMatlChunks(matlChunks);
+
+    // Using defaults
+    const groundColor = new Color(0x505050);
+    const skyColor = new Color(0xedfffc);
+    const lightColor = new Color(0x877e68);
+
     // console.log(mainChunk, models, colors, materials);
-    return new VoxelScene(rootObj, models, colors, materials);
+    return new VoxelScene(
+      rootObj,
+      models,
+      materials,
+      colors,
+      groundColor,
+      lightColor,
+      skyColor
+    );
   }
 
   private parseNodeChunks(chunkMap: NodeChunkMap): Obj {
