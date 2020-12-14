@@ -160,6 +160,8 @@ export default class MagicaVoxelReader extends Reader {
     this.readChunkHeader();
     const materialId = this.readInt();
     const dict = this.readDict();
+    
+    console.log(dict);
 
     // Type
     let type;
@@ -174,8 +176,20 @@ export default class MagicaVoxelReader extends Reader {
     const options: MatlChunkOptions = { type };
 
     if (dict._weight) {
+      // Magicavoxel used to use this for all materials except diffuse
+      // But no longer the case.
       options.weight = parseFloat(dict._weight as string);
+    } else if (type === MaterialType.GLASS && dict._alpha) {
+      // Glass material now uses _alpha instead of _weight
+      options.weight = parseFloat(dict._alpha as string);
+    } else if (type === MaterialType.METAL && dict._metal) {
+      // Metal material now uses _metal instead of _weight
+      options.weight = parseFloat(dict._metal as string);
+    } else if (type === MaterialType.EMISSIVE && dict._emit) {
+      // Emissive material now uses _emit instead of _weight
+      options.weight = parseFloat(dict._emit as string);
     }
+
     if (dict._rough) {
       options.rough = parseFloat(dict._rough as string);
     }
@@ -200,6 +214,8 @@ export default class MagicaVoxelReader extends Reader {
     if (dict._glow) {
       options.glow = parseInt(dict._glow as string);
     }
+
+    // TODO: Subsurface scattering
 
     return new MatlChunk(materialId, options);
   }
