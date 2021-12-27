@@ -18,7 +18,7 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 
 interface OrbitControls extends THREE.OrbitControls {}
 
-interface VoxelViewerProps {
+interface VoxelViewerProps extends React.HTMLAttributes<HTMLDivElement> {
   url: string
 }
 
@@ -48,12 +48,15 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   private loader: Loader;
   private pauseCount: number = 0;
   private url: string;
+  private containerRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: VoxelViewerProps) {
     super(props);
+    this.containerRef = React.createRef<HTMLDivElement>();
     this.url = props.url;
     this.loader = new Loader();
     this.scene = new VoxelScene();
+    // Initial dummy value.
     const viewportSize = new Vector2(512, 512);
     this.camera = new PerspectiveCamera(
       60,
@@ -146,7 +149,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 
   componentDidMount() {
-    const viewportSize = new Vector2(window.innerWidth, window.innerHeight);
+    const containerEl = this.containerRef.current!;
+    const viewportSize = new Vector2(containerEl.clientWidth, containerEl.clientHeight);
 
     this.onWindowResize();
     
@@ -222,7 +226,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   onWindowResize = () => {
     console.log('window resize');
-    const viewportSize = new Vector2(window.innerWidth, window.innerHeight);
+    const containerEl = this.containerRef.current!;
+    const viewportSize = new Vector2(containerEl.clientWidth, containerEl.clientHeight);
+
 
     if (viewportSize.x > 0 && viewportSize.y > 0) {
       this.camera.aspect = viewportSize.x / viewportSize.y;
@@ -253,30 +259,32 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       // (_camera.projectionMatrix * _camera.viewMatrix * _modelMatrix).inverted();
 
       // @ts-ignore
-      <Surface
-        width={viewportSize.x}
-        height={viewportSize.y}
-        pixelRatio={pixelRatio}
-        onContextRestored={this.onContextRestored}
-        // webglContextAttributes={{ preserveDrawingBuffer: true }}
-      >
-        <VoxelShader
-          shapeHashes={this.state.shapeHashes}
-          packedTexture={this.state.packedTexture}
-          colors={this.state.colors}
-          materials={this.state.materials}
-          tick={this.state.tick}
-          maxTick={MAX_TICK}
-          resolution={resolution}
-          eye={this.state.eye}
-          lightDir={this.state.lightDir}
-          lightColor={this.state.lightColor}
-          groundColor={this.state.groundColor}
-          skyColor={this.state.skyColor}
-          viewMatrixInverse={this.state.viewMatrixInverse}
-          projectionMatrixInverse={this.state.projectionMatrixInverse}
-        />
-      </Surface>
+      <div ref={this.containerRef} {...this.props}>
+        <Surface
+          width={viewportSize.x}
+          height={viewportSize.y}
+          pixelRatio={pixelRatio}
+          onContextRestored={this.onContextRestored}
+          // webglContextAttributes={{ preserveDrawingBuffer: true }}
+        >
+          <VoxelShader
+            shapeHashes={this.state.shapeHashes}
+            packedTexture={this.state.packedTexture}
+            colors={this.state.colors}
+            materials={this.state.materials}
+            tick={this.state.tick}
+            maxTick={MAX_TICK}
+            resolution={resolution}
+            eye={this.state.eye}
+            lightDir={this.state.lightDir}
+            lightColor={this.state.lightColor}
+            groundColor={this.state.groundColor}
+            skyColor={this.state.skyColor}
+            viewMatrixInverse={this.state.viewMatrixInverse}
+            projectionMatrixInverse={this.state.projectionMatrixInverse}
+          />
+        </Surface>
+      </div>
     );
 
   }
