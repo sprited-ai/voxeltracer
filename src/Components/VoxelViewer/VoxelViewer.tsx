@@ -49,27 +49,23 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   private pauseCount: number = 0;
   private url: string;
 
-
   constructor(props: VoxelViewerProps) {
     super(props);
-    // this.scene = new Scene();
-    const viewportSize = new Vector2(window.innerWidth, window.innerHeight);
-    this.camera = new PerspectiveCamera(60,
-      (viewportSize.y > 0 ? viewportSize.x / viewportSize.y : 1)
-      , 0.01, 1000);
+    this.url = props.url;
+    this.loader = new Loader();
+    this.scene = new VoxelScene();
+    const viewportSize = new Vector2(512, 512);
+    this.camera = new PerspectiveCamera(
+      60,
+      (viewportSize.y > 0 ? viewportSize.x / viewportSize.y : 1), 
+      0.01, 
+      1000
+    );
     this.camera.position.set(0, 50, 100);
     this.camera.lookAt(new Vector3(0, 30, 0));
     this.camera.updateProjectionMatrix();
-
-    this.loader = new Loader();
-    this.scene = new VoxelScene();
-    this.url = props.url;
-
-    window.addEventListener('resize', this.onWindowResize);
-
     const lightDir = new Vector3(-1.1, 1.9, 1.7);
     lightDir.normalize();
-
     this.state = {
       shapeHashes: [],
       packedTexture: dummyPackedTexture,
@@ -150,6 +146,20 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   }
 
   componentDidMount() {
+    const viewportSize = new Vector2(window.innerWidth, window.innerHeight);
+
+    this.onWindowResize();
+    
+    window.addEventListener('resize', this.onWindowResize);
+
+    this.setState({
+      viewportSize,
+      eye: this.camera.position.toArray(),
+      viewMatrixInverse: this.camera.matrixWorld.elements,
+      //@ts-ignore
+      projectionMatrixInverse: this.camera.projectionMatrixInverse.elements
+    });
+
     const orbitControls: OrbitControls = this.orbitControls = new OrbitControls(this.camera);
     orbitControls.target = new Vector3(0, 30, 0);
     orbitControls.addEventListener('change', this.didOrbit);
@@ -232,7 +242,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // const projectionMatrixInverse: Matrix4 = this.camera.projectionMatrixInverse;
 
     // Render with minimum pixel ratio of 2.
-    const pixelRatio = window.devicePixelRatio || 1;
+    const pixelRatio = typeof window !== "undefined" && window.devicePixelRatio || 1;
     const { viewportSize } = this.state;
     const resolution = [
       pixelRatio * viewportSize.x,

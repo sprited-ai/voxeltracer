@@ -1,0 +1,1 @@
+export { default as VoxelViewer } from './Components/VoxelViewer/VoxelViewer';

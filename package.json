@@ -7,8 +7,13 @@
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
     "predeploy": "yarn build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "prepublish": "yarn clean && yarn tsc && yarn copy-files",
+    "clean": "rm -rf ./dist",
+    "copy-files": "cp -R ./src/Shaders/ ./dist/Shaders/"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": "git+https://github.com/kndlt/voxelviewer.git",
   "keywords": [],
   "author": "kndlt <kndlt22@gmail.com>",
@@ -152,6 +157,7 @@
     ]
   },
   "devDependencies": {
-    "gh-pages": "^2.0.1"
+    "gh-pages": "^2.0.1",
+    "webpack-cli": "^3.0.0"
   }
 }

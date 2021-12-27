@@ -1,7 +1,10 @@
+// Ref 1: https://webpack.js.org/guides/typescript/#basic-setup
 {
   "compilerOptions": {
     "target": "esnext",
-    "allowJs": true,
+    "declaration": true,
+    "sourceMap": true,
+    // "allowJs": true,
     "skipLibCheck": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -10,10 +13,11 @@
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "preserve",
-    "lib": ["esnext", "dom"]
+    // "isolatedModules": true,
+    // "noEmit": true,
+    "jsx": "react",
+    "lib": ["esnext", "dom"],
+    "outDir": "./dist"
   },
   "include": [
     "src"
