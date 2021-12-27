@@ -8,45 +8,70 @@ export default class Loader {
     'vox': new MagicaVoxelContext()
   }
 
-  private getPotentialDecoders(url: string, buffer: ArrayBuffer): Context[] {
-    const contexts: Context[] = [];
-    if (url.endsWith('.vox')) {
-      contexts.push(this.contexts.vox);
+  // private getPotentialDecoders(url: string, buffer: ArrayBuffer): Context[] {
+  //   const contexts: Context[] = [];
+  //   if (url.endsWith('.vox')) {
+  //     contexts.push(this.contexts.vox);
+  //   }
+  //   return contexts;
+  // }
+
+  public loadBuffer(buffer: ArrayBuffer) {
+    // For now, we only support one loader, and that's magicavoxel
+    let contexts = [this.contexts.vox];
+
+    if (!contexts.length) {
+      throw "Was unable to find a context for the file.";
     }
-    return contexts;
+
+    let scene: VoxelScene | null = null;
+    for (let i = 0; i < contexts.length; ++i) {
+      const context = contexts[i];
+      scene = context.parseScene(buffer);
+      if (scene) {
+        break;
+      }
+    }
+
+    if (!scene) {
+      throw "Unable to read the file.";
+    }
+
+    return scene;
   }
 
-  public loadUrl(url: string): Promise<VoxelScene> {
+  public loadFile(file: File): Promise<VoxelScene> {
+    const self = this;
+    return new Promise(resolve => {
+      const fileReader = new FileReader();
+      fileReader.onload = function(e) {
+        const buffer = fileReader.result as ArrayBuffer;
+        resolve(self.loadBuffer(buffer));
+      }
+      fileReader.readAsArrayBuffer(file);
+    });
+  }
+
+  public load(src: string | File): Promise<VoxelScene> {
+    if (typeof src === "string") {
+      return this.loadUrl(src);
+    }
+    else {
+      return this.loadFile(src);
+    }
+  }
+
+  public async loadUrl(url: string): Promise<VoxelScene> {
     const request = new Request(url, {
       headers: new Headers({'Content-Type': 'application/octet-stream'})
     });
 
-    return fetch(request).then((response) => {
-      if (!response.ok) {
-        throw Error(`Unable to download, server returned ${response.status} ${response.statusText}`);
-      }
-      return response.arrayBuffer().then((buffer) => {
-        let contexts = this.getPotentialDecoders(url, buffer);
-
-        if (!contexts.length) {
-          throw "Was unable to find a context for the file.";
-        }
-
-        let scene: VoxelScene | null = null;
-        for (let i = 0; i < contexts.length; ++i) {
-          const context = contexts[i];
-          scene = context.parseScene(buffer);
-          if (scene) {
-            break;
-          }
-        }
-
-        if (!scene) {
-          throw "Unable to read the file.";
-        }
-
-        return scene;
-      });
-    });
+    const response = await fetch(request);
+  
+    if (!response.ok) {
+      throw Error(`Unable to download, server returned ${response.status} ${response.statusText}`);
+    }
+    const buffer = await response.arrayBuffer();
+    return this.loadBuffer(buffer);
   }
 }

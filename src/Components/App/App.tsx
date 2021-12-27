@@ -11,7 +11,7 @@ export default class App extends Component {
     const url = (parsed ? parsed.url as string: undefined) || defaultUrl;
     return (
       <div className="App">
-        <VoxelViewer url={url} />
+        <VoxelViewer src={url} />
       </div>
     );
   }

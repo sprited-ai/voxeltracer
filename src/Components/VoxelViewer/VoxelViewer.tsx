@@ -19,7 +19,7 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 interface OrbitControls extends THREE.OrbitControls {}
 
 interface VoxelViewerProps extends React.HTMLAttributes<HTMLDivElement> {
-  url: string
+  src: string | File
 }
 
 interface VoxelViewerState {
@@ -47,13 +47,13 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   private orbitControls?: OrbitControls;
   private loader: Loader;
   private pauseCount: number = 0;
-  private url: string;
+  private src: string | File;
   private containerRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: VoxelViewerProps) {
     super(props);
     this.containerRef = React.createRef<HTMLDivElement>();
-    this.url = props.url;
+    this.src = props.src;
     this.loader = new Loader();
     this.scene = new VoxelScene();
     // Initial dummy value.
@@ -169,7 +169,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     orbitControls.addEventListener('change', this.didOrbit);
 
     // Load model.
-    this.loader.loadUrl(this.url).then((scene: VoxelScene) => {
+    this.loader.load(this.src).then((scene: VoxelScene) => {
       this.scene = scene;
       this.sceneDidChange();
     });
