@@ -164,7 +164,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       projectionMatrixInverse: this.camera.projectionMatrixInverse.elements
     });
 
-    const orbitControls: OrbitControls = this.orbitControls = new OrbitControls(this.camera);
+    console.log("new OrbitControls", containerEl)
+    const orbitControls: OrbitControls = this.orbitControls = new OrbitControls(this.camera, containerEl);
     orbitControls.target = new Vector3(0, 30, 0);
     orbitControls.addEventListener('change', this.didOrbit);
 
