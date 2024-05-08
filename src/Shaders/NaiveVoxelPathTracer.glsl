@@ -1,3 +1,5 @@
+#version 300 es
+
 precision highp float;
 precision highp sampler2D;
 
@@ -19,7 +21,6 @@ precision highp sampler2D;
 #pragma glslify: MATL_EMISSIVE = require('./Constants/MATL_EMISSIVE');
 #pragma glslify: GROUND_MATERIAL_INDEX = require('./Constants/GROUND_MATERIAL_INDEX');
 
-varying vec2 uv;
 uniform vec3 eye;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
@@ -34,6 +35,9 @@ uniform mat4 projectionMatrixInverse;
 uniform int tick;
 uniform int maxTick;
 uniform ivec2 resolution;
+
+in vec2 uv;
+out vec4 outColor;
 
 const int BOUNCE_LIMIT = 2;
 
@@ -52,7 +56,7 @@ void main() {
   );
 
   // // Debug voxel texture.
-  // vec4 texelValue = texture2D(modelTexture0, vec2(uv.x, 1.0 - uv.y));
+  // vec4 texelValue = texture(modelTexture0, vec2(uv.x, 1.0 - uv.y));
   // gl_FragColor = vec4(texelValue.rgb, 1.0); return;
 
   // Seed for random
@@ -168,7 +172,7 @@ void main() {
   float weight = 1.0 / float(effectiveTick + 1);
   vec4 previousColor = effectiveTick > 0 ? getPreviousColor(uv) : vec4(0.0);
   vec4 finalColor = mix(previousColor, vec4(accumulatedColor, 1.0), weight);
-  gl_FragColor = finalColor;
+  outColor = finalColor;
 }
 
 

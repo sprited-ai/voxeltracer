@@ -1,3 +1,5 @@
+#version 300 es
+
 precision highp float;
 
 varying vec2 uv;

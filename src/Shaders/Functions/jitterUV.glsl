@@ -2,9 +2,9 @@ const int subPixelSideCount = 7;
 
 vec2 jitterUV(vec2 uv, int tick, ivec2 resolution) {
   int subPixelCount = subPixelSideCount * subPixelSideCount;
-  int subPixelIndex = mod(tick, subPixelCount);
+  int subPixelIndex = tick % subPixelCount;
   ivec2 subPixelIJ = ivec2(
-    mod(subPixelIndex, subPixelSideCount),
+    subPixelIndex % subPixelSideCount,
     subPixelIndex / subPixelSideCount
   );
   vec2 subPixelLocalUV = (vec2(subPixelIJ) + 0.5) / float(subPixelSideCount);

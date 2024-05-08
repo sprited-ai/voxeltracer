@@ -28,9 +28,12 @@ interface VoxelShaderProps {
   materials: MaterialArray;
 }
 
+console.log("shader", NaiveVoxelPathTracer);
+// console.log("shader", GLSL`${NaiveVoxelPathTracer}`);  
+
 const shaders = Shaders.create({
   vt01: {
-    frag: GLSL`${NaiveVoxelPathTracer}`
+    frag: GLSL`${NaiveVoxelPathTracer}`,
   },
   sampleShader: {
     frag: GLSL`${sampleShader}`
@@ -111,7 +114,7 @@ const VoxelShader: React.SFC<VoxelShaderProps> = (props) => {
   // );
   return (
     <NearestCopy>
-      <EnhancedNode
+      <Node
         shader={shaders.vt01}
         uniforms={uniforms}
         uniformsOptions={uniformsOptions}

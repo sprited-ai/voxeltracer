@@ -14,14 +14,21 @@ class EnhancedNode extends Node {
   _prepareGLObjects(gl: WebGLRenderingContext): void {
 
     let ext;
+    
+    const webGLVersion = gl.getParameter(gl.VERSION);
 
+    console.log(webGLVersion, 'WebGL version')
+
+    if (webGLVersion.includes('WebGL 2')) {
+      return super._prepareGLObjects(gl);
+    }
     // Load extension for floating point frame buffers. iOS device
     // (currently iOS 12) does not really support 32bit floating
     // points frame buffers (it says it does, but not really). You
     // can confirm this by checking if attaching framebuffer returns
     // some error or not. If interested please take a look as I
     // haven't done a through research.
-    if (ext = gl.getExtension('OES_texture_half_float')) {
+    else if (ext = gl.getExtension('OES_texture_half_float')) {
       const halfFloat = ext.HALF_FLOAT_OES;
       console.log('Using OES_texture_half_float WebGL extension.');
 

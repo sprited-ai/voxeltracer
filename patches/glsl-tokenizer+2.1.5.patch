@@ -1,0 +1,12 @@
+diff --git a/node_modules/glsl-tokenizer/lib/builtins.js b/node_modules/glsl-tokenizer/lib/builtins.js
+index 5a17b89..30dd28b 100644
+--- a/node_modules/glsl-tokenizer/lib/builtins.js
++++ b/node_modules/glsl-tokenizer/lib/builtins.js
+@@ -135,6 +135,7 @@ module.exports = [
+   , 'sqrt'
+   , 'step'
+   , 'tan'
++  , 'texture'
+   , 'texture2D'
+   , 'texture2DLod'
+   , 'texture2DProj'

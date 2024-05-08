@@ -1,11 +1,9 @@
 #pragma glslify: Ray = require('../Structs/Ray')
 #pragma glslify: Hit = require('../Structs/Hit')
 #pragma glslify: Shape = require('../Structs/Shape')
-#pragma glslify: mod = require('../Functions/mod')
 #pragma glslify: voxelAt = require('../Functions/voxelAt')
 #pragma glslify: intersectBoundingBox = require('./intersectBoundingBox')
 #pragma glslify: shapes = require('../Uniforms/shapes')
-#pragma glslify: transpose = require('glsl-transpose')
 
 const float EPSILON = 0.0001;
 const int ITERATION_LIMIT = 400;

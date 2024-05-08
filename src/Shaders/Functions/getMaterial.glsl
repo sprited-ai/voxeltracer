@@ -1,5 +1,4 @@
 #pragma glslify: Material = require('../Structs/Material')
-#pragma glslify: mod = require('./mod')
 #pragma glslify: MATL_DIFFUSE = require('../Constants/MATL_DIFFUSE');
 #pragma glslify: MATL_METAL = require('../Constants/MATL_METAL');
 #pragma glslify: MATL_GLASS = require('../Constants/MATL_GLASS');
@@ -13,13 +12,13 @@ uniform sampler2D materialTexture;
  */
 Material getMaterial(int index) {
     ivec2 pos = ivec2(
-      mod(index, 16),
+      index % 16,
       index / 16
     );
     vec2 uv = (vec2(pos) + 0.5) / 16.0;
     vec2 flippedUV = vec2(uv.x, 1.0 - uv.y);
-    vec4 color = texture2D(colorTexture, flippedUV);
-    vec4 options = texture2D(materialTexture, flippedUV);
+    vec4 color = texture(colorTexture, flippedUV);
+    vec4 options = texture(materialTexture, flippedUV);
 
     int type = int(options.r * 255.0);
     float weight = 0.0;

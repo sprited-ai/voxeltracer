@@ -276,9 +276,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // const projectionMatrixInverse: Matrix4 = this.camera.projectionMatrixInverse;
 
     // Render with minimum pixel ratio of 2.
-    const pixelRatio = this.props.devicePixelRatio !== undefined ? this.props.devicePixelRatio : typeof window !== "undefined" && window.devicePixelRatio || 1;
+    // const pixelRatio = this.props.devicePixelRatio !== undefined ? this.props.devicePixelRatio : typeof window !== "undefined" && window.devicePixelRatio || 1;
     // Fix it to 2.
-    // const pixelRatio = 2;
+    const pixelRatio = 1;
     const { viewportSize } = this.state;
     const resolution = [
       pixelRatio * viewportSize.x,
@@ -324,4 +324,4 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
 // Rest for at least 50ms. This should prevent the webpage 
 // from solely consuming all the gpu powers.
-export default ReactTimeout<VoxelViewerProps>(ReactAnimationFrame(VoxelViewer, 80));
+export default ReactTimeout<VoxelViewerProps>(ReactAnimationFrame(VoxelViewer, 15));
