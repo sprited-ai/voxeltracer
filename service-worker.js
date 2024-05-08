@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/voxelviewer/precache-manifest.1f1f2b6cd04721821ccf582092089210.js"
+  "/voxelviewer/precache-manifest.ba1c0b67006926b3e9176712466e1f1b.js"
 );
 
 workbox.clientsClaim();
