@@ -2,7 +2,7 @@
 
 precision highp float;
 
-varying vec2 uv;
+in vec2 uv;
 uniform mat4 matrixWorldInverse;
 uniform mat4 projectionMatrixInverse;
 uniform vec3 eye;

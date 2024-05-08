@@ -16,11 +16,27 @@ class EnhancedNode extends Node {
     let ext;
     
     const webGLVersion = gl.getParameter(gl.VERSION);
-
     console.log(webGLVersion, 'WebGL version')
 
-    if (webGLVersion.includes('WebGL 2')) {
-      return super._prepareGLObjects(gl);
+    if (ext = gl.getExtension('EXT_color_buffer_half_float')) {
+      const halfFloat = (gl as any).HALF_FLOAT;
+      // const RGBA16F_EXT = (ext as any).RGBA16F_EXT;
+      // const RGBA16F = (gl as any).RGBA16F;
+      // console.log('Using EXT_color_buffer_half_float WebGL2 extension.', RGBA16F_EXT, RGBA16F, halfFloat);
+
+      // Fool gl-react to use half-float instead of
+      // gl.UNSIGNED_BYTE for its frame buffer type.
+      const glProxy = new Proxy(gl, {
+        get(gl: WebGLRenderingContext, prop: string) {
+          switch(prop) {
+            case 'UNSIGNED_BYTE': return halfFloat;
+            default:
+              const member = (gl as any)[prop];
+              return typeof member === 'function' ? member.bind(gl) : member;
+          }
+        }
+      });
+      return super._prepareGLObjects(glProxy);
     }
     // Load extension for floating point frame buffers. iOS device
     // (currently iOS 12) does not really support 32bit floating
