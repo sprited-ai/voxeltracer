@@ -286,7 +286,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       // (_camera.projectionMatrix * _camera.viewMatrix * _modelMatrix).inverted();
 
       // @ts-ignore
-      <div ref={this.containerRef} {...this.props}>
+      <div style={{height: "100%"}}ref={this.containerRef} {...this.props}>
         <Surface
           width={viewportSize.x}
           height={viewportSize.y}
@@ -321,4 +321,4 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
 // Rest for at least 50ms. This should prevent the webpage 
 // from solely consuming all the gpu powers.
-export default ReactTimeout<VoxelViewerProps>(ReactAnimationFrame(VoxelViewer, 80));
+export default ReactTimeout<VoxelViewerProps>(ReactAnimationFrame(VoxelViewer, 40));
