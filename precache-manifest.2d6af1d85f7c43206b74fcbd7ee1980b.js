@@ -1,11 +1,11 @@
 self.__precacheManifest = [
   {
-    "revision": "16534c6553f01502f8d9",
-    "url": "/voxelviewer/static/css/main.3ac4a0e9.chunk.css"
+    "revision": "b5a3189ea251e7531c79",
+    "url": "/voxelviewer/static/css/main.0a245e93.chunk.css"
   },
   {
-    "revision": "16534c6553f01502f8d9",
-    "url": "/voxelviewer/static/js/main.16534c65.chunk.js"
+    "revision": "b5a3189ea251e7531c79",
+    "url": "/voxelviewer/static/js/main.b5a3189e.chunk.js"
   },
   {
     "revision": "d8c3993a4a2d8a19641e",
@@ -16,7 +16,7 @@ self.__precacheManifest = [
     "url": "/voxelviewer/static/js/runtime~main.a0ffb064.js"
   },
   {
-    "revision": "8327f1692edd72c91603a15ba899ed45",
+    "revision": "7fe8a511db3e386ca8e256a589717fd2",
     "url": "/voxelviewer/index.html"
   }
 ];
