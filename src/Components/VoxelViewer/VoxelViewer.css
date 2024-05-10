@@ -1,0 +1,31 @@
+.voxel-viewer {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.top-bar {
+    background-color: rgb(42, 29, 138);
+    color: white;
+    font-size: 1em;
+    padding: 0.25em;
+    text-align: center;
+}
+.menu-bar {
+    background-color: rgb(79, 7, 168);
+    color: white;
+    font-size: 1em;
+    padding: 0.25em;
+}
+.voxel-viewer-surface-container {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    overflow: hidden;
+}
+.status-panel {
+    background-color: rgb(42, 29, 138);
+    color: white;
+    font-size: 1em;
+    padding: 0.25em;
+    text-align: center;
+}
