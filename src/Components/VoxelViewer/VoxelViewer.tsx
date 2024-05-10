@@ -12,8 +12,9 @@ import ColorArray from "../../Data/Arrays/ColorArray";
 import ScenePacker from "../../Data/Packers/ScenePacker";
 import ndarray from "ndarray";
 import ShapeHash from "../../Data/Types/ShapeHash";
+import './VoxelViewer.css';
 
-const MAX_TICK = 512;
+const MAX_TICK = 1000;
 const OrbitControls = require('three-orbit-controls')(THREE);
 
 interface OrbitControls extends THREE.OrbitControls {}
@@ -22,11 +23,14 @@ interface VoxelViewerProps extends React.HTMLAttributes<HTMLDivElement> {
   src: string | File;
   devicePixelRatio?: number;
   onRendered?: () => void;
+  onFileChange: (src: string) => void;
   maxSteps?: number;
 }
 
 interface VoxelViewerState {
   tick: number;
+  took: number;
+  startTime: number;
   eye: number[];
   lightDir: Vector3;
   lightColor: Color;
@@ -78,6 +82,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       materials: this.scene.materials,
       colors: this.scene.colors,
       tick: 0,
+      took: 0,
+      startTime: Date.now(),
       viewportSize,
       lightDir: lightDir,
       lightColor: new Color(),
@@ -101,7 +107,9 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       groundColor: this.scene.groundColor,
       skyColor: this.scene.skyColor,
       lightColor: this.scene.lightColor,
-      tick: 0
+      tick: 0,
+      took: 0,
+      startTime: Date.now()
     });
     this.restartAnimation();
     this.pauseAnimation(200);
@@ -144,6 +152,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
     this.setState({
       tick: 0,
+      took: 0,
+      startTime: Date.now(),
       eye: this.camera.position.toArray(),
       viewMatrixInverse: this.camera.matrixWorld.elements,
       //@ts-ignore
@@ -182,6 +192,17 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // this.loader.loadUrl('vox/3x3x3.vox');
   }
 
+  componentDidUpdate(prevProps: VoxelViewerProps) {
+    // Reload the scene if the src has changed.
+    if (this.props.src !== prevProps.src) {
+      this.src = this.props.src;
+      this.loader.load(this.src).then((scene: VoxelScene) => {
+        this.scene = scene;
+        this.sceneDidChange();
+      });
+    }
+  }
+
   componentWillUnmount() {
 
     if (this.orbitControls) {
@@ -194,7 +215,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
   restartAnimation() {
     this.endAnimation();
-    this.setState({ tick: 0 });
+    this.setState({ tick: 0, took: 0, startTime: Date.now() });
     this.startAnimation();
   }
 
@@ -204,7 +225,8 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       return;
     }
     this.setState({
-      tick: tick + 1
+      tick: tick + 1,
+      took: Date.now() - this.state.startTime
     });
     if (tick === 0) {
       console.log('Render started');
@@ -281,38 +303,141 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       pixelRatio * viewportSize.x,
       pixelRatio * viewportSize.y
     ];
+
+    const availableVoxelFiles = [
+      "vox/3x3x3.vox",
+      "vox/8x8x8.vox",
+      "vox/bricks.vox",
+      "vox/castle.vox",
+      "vox/chr_knight.vox",
+      "vox/chr_old.vox",
+      "vox/chr_rain.vox",
+      "vox/chr_sword.vox",
+      "vox/doom.vox",
+      "vox/emit.vox",
+      "vox/ephtracy.vox",
+      // "vox/flat_building.vox",
+      // "vox/glass.vox",
+      // "vox/glossy_apt_v01.vox",
+      // "vox/glossy_apt.vox",
+      // "vox/hakone_train_v01.vox",
+      // "vox/izakaya_with_vending_machine_v02.vox",
+      // "vox/izakaya_with_vending_machine_v03.vox",
+      // "vox/izakaya_with_vending_machine.vox",
+      // "vox/japanese_house_interior.vox",
+      "vox/menger.vox",
+      "vox/metal.vox",
+      "vox/monu1.vox",
+      "vox/monu9.vox",
+      "vox/monu10.vox",
+      "vox/multiple.vox",
+      "vox/nature.vox",
+      // "vox/pink_mini_store_v02.vox",
+      // "vox/pink_mini_store.vox",
+      // "vox/pink_multi_purpose_building_v02.vox",
+      // "vox/pink_multi_purpose_building.vox",
+      // "vox/school_asphalt.vox",
+      // "vox/school_main_building_gate.vox",
+      // "vox/school_main_part_left_end.vox",
+      // "vox/school_main_part_middle_alt.vox",
+      // "vox/school_main_part_middle.vox",
+      // "vox/school_main_part_right_end.vox",
+      // "vox/school_main_part_second_floor_center_piece.vox",
+      // "vox/school_main_part_second_floor_left_end.vox",
+      // "vox/school_main_part_second_floor_middle_alt.vox",
+      // "vox/school_main_part_second_floor_middle.vox",
+      // "vox/school_main_part_second_floor_right_end.vox",
+      // "vox/school_main_part_top_floor_center_piece.vox",
+      // "vox/school_main_part_top_floor_left_end.vox",
+      // "vox/school_main_part_top_floor_middle_alt.vox",
+      // "vox/school_main_part_top_floor_middle.vox",
+      // "vox/school_main_part_top_floor_right_end.vox",
+      // "vox/school_podium.vox",
+      // "vox/school_shade_part_left.vox",
+      // "vox/school_shade_part_middle.vox",
+      // "vox/school_shade_part_right.vox",
+      // "vox/school_v2_asphalt.vox",
+      // "vox/school_v2_gate.vox",
+      // "vox/school_v2_left.vox",
+      // "vox/school_v2_podium.vox",
+      // "vox/school_v2_right.vox",
+      // "vox/school_v2_shade_left.vox",
+      // "vox/school_v2_shade_more_left.vox",
+      // "vox/school_v2_shade_right.vox",
+      // "vox/school_v2_slope_left_behind.vox",
+      // "vox/school_v2_slope_left.vox",
+      // "vox/school_v2_slope_right_behind.vox",
+      // "vox/school_v2_slope_right.vox",
+      // "vox/school_v03_gate.vox",
+      // "vox/school_v03_left.vox",
+      // "vox/school_v03_right.vox",
+      "vox/shelf.vox",
+      "vox/teapot.vox",
+      "vox/test_matl.vox",
+      // "vox/tiny_apt_v02.vox",
+      // "vox/tiny_apt.vox",
+      // "vox/untitled.vox",
+      // "vox/wall-part-1.vox",
+    ]
+
+    const filenameText = this.src instanceof File ? this.src.name : this.src;
+    const voxelSize = this.scene && this.scene.models && this.scene.models.length > 0 ? this.scene.models[0].size : undefined;
+    const voxelSizeText = voxelSize ? `Voxel Size: ${voxelSize.x}x${voxelSize.y}x${voxelSize.z}` : undefined;
+    const artworkText = (
+      <select value={filenameText} onChange={(e) => {
+        this.props.onFileChange(e.target.value)
+      } }>
+        {availableVoxelFiles.map((filename, i) => (
+          <option key={i} value={filename}>{filename}</option>
+        ))}
+      </select>
+    )
+    const renderStatus = this.state.tick >= MAX_TICK ? `Rendering Completed (took ${this.state.took}ms)` : `Rendering (${this.state.tick}/${MAX_TICK})`;
+    const resolutionText = `Resolution: ${resolution[0]}x${resolution[1]} (${pixelRatio}x)`;
+    const textureSizeText = `Texture Size: ${this.state.packedTexture.shape[0]}x${this.state.packedTexture.shape[1]}x4`;
+    const fps = this.state.took > 0 ? this.state.tick / this.state.took * 1000 : 0;
+    const fpsText = `FPS: ${fps.toFixed(2)}`;
+    const statusLines = [artworkText, voxelSizeText, textureSizeText, resolutionText, renderStatus, fpsText];
     return (
       // Matrix4 invertedModelViewProjectionMatrix =
       // (_camera.projectionMatrix * _camera.viewMatrix * _modelMatrix).inverted();
 
       // @ts-ignore
-      <div ref={this.containerRef} {...this.props}>
-        <Surface
-          width={viewportSize.x}
-          height={viewportSize.y}
-          pixelRatio={pixelRatio}
-          onContextRestored={this.onContextRestored}
-          // Needed for snapshoting. There are alternative approaches worth looking at though.
-          // Ref: https://webglfundamentals.org/webgl/lessons/webgl-tips.html
-          webglContextAttributes={{ preserveDrawingBuffer: true }}
-        >
-          <VoxelShader
-            shapeHashes={this.state.shapeHashes}
-            packedTexture={this.state.packedTexture}
-            colors={this.state.colors}
-            materials={this.state.materials}
-            tick={this.state.tick}
-            maxTick={MAX_TICK}
-            resolution={resolution}
-            eye={this.state.eye}
-            lightDir={this.state.lightDir}
-            lightColor={this.state.lightColor}
-            groundColor={this.state.groundColor}
-            skyColor={this.state.skyColor}
-            viewMatrixInverse={this.state.viewMatrixInverse}
-            projectionMatrixInverse={this.state.projectionMatrixInverse}
-          />
-        </Surface>
+      <div class="voxel-viewer" {...this.props}>
+        <div className="top-bar">
+          VoxelTracer V1.0
+        </div>
+        <div className="voxel-viewer-surface-container" ref={this.containerRef}>
+          <Surface
+            width={viewportSize.x}
+            height={viewportSize.y}
+            pixelRatio={pixelRatio}
+            onContextRestored={this.onContextRestored}
+            // Needed for snapshoting. There are alternative approaches worth looking at though.
+            // Ref: https://webglfundamentals.org/webgl/lessons/webgl-tips.html
+            webglContextAttributes={{ preserveDrawingBuffer: true }}
+          >
+            <VoxelShader
+              shapeHashes={this.state.shapeHashes}
+              packedTexture={this.state.packedTexture}
+              colors={this.state.colors}
+              materials={this.state.materials}
+              tick={this.state.tick}
+              maxTick={MAX_TICK}
+              resolution={resolution}
+              eye={this.state.eye}
+              lightDir={this.state.lightDir}
+              lightColor={this.state.lightColor}
+              groundColor={this.state.groundColor}
+              skyColor={this.state.skyColor}
+              viewMatrixInverse={this.state.viewMatrixInverse}
+              projectionMatrixInverse={this.state.projectionMatrixInverse}
+            />
+          </Surface>
+        </div>
+        <div className="status-panel">{
+          statusLines.map((line, i) => (<div key={i}>{line}</div>))
+        }</div>
       </div>
     );
 
@@ -321,4 +446,4 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 
 // Rest for at least 50ms. This should prevent the webpage 
 // from solely consuming all the gpu powers.
-export default ReactTimeout<VoxelViewerProps>(ReactAnimationFrame(VoxelViewer, 80));
+export default ReactTimeout<VoxelViewerProps>(ReactAnimationFrame(VoxelViewer));
