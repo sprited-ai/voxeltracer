@@ -9,8 +9,8 @@
     "predeploy": "yarn build",
     "deploy": "gh-pages -d build",
     "prepublish": "yarn clean && yarn tsc && yarn copy-files",
-    "clean": "rm -rf ./dist",
-    "copy-files": "cp -R ./src/Shaders/ ./dist/Shaders/"
+    "clean": "rimraf ./dist",
+    "copy-files": "copyfiles ./src/Shaders/ ./dist/Shaders/"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,6 +20,9 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/kndlt/voxelviewer/issues"
+  },
+  "engines": {
+    "node": "<17.0.0"
   },
   "homepage": "https://kndlt.github.io/voxelviewer",
   "dependencies": {
@@ -45,6 +48,7 @@
     "bfj": "6.1.1",
     "case-sensitive-paths-webpack-plugin": "2.1.2",
     "chalk": "2.4.1",
+    "copyfiles": "^2.4.1",
     "css-loader": "1.0.0",
     "dotenv": "6.0.0",
     "dotenv-expand": "4.2.0",
@@ -86,6 +90,7 @@
     "react-dom": "^16.6.3",
     "react-timeout": "^1.1.2",
     "resolve": "1.8.1",
+    "rimraf": "^5.0.5",
     "sass-loader": "7.1.0",
     "style-loader": "0.23.0",
     "terser-webpack-plugin": "1.1.0",
