@@ -14,6 +14,7 @@ function getTextureWidth(scene: VoxelScene): number {
     volume, { size }) => volume + size.x * size.y * size.z,
     0
   );
+  console.log("!!!Total Volume", fullVolume, "models", models.length);
   let width = 1;
   while (width * width * 4 < fullVolume) {
     width *= 2;
@@ -21,6 +22,8 @@ function getTextureWidth(scene: VoxelScene): number {
   if (width > MAX_TEXTURE_WIDTH) {
     throw 'Texture size limit reached';
   }
+  console.log("!!!models", models)
+  console.log("!!!Texture Width", width);
   return width;
 }
 
