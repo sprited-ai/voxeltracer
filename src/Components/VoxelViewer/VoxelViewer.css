@@ -9,12 +9,16 @@
     font-size: 1em;
     padding: 0.25em;
     text-align: center;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 .menu-bar {
     background-color: rgb(79, 7, 168);
     color: white;
     font-size: 1em;
     padding: 0.25em;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 .voxel-viewer-surface-container {
     flex-grow: 1;
@@ -28,4 +32,6 @@
     font-size: 1em;
     padding: 0.25em;
     text-align: center;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
