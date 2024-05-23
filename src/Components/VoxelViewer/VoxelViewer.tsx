@@ -23,7 +23,7 @@ interface VoxelViewerProps extends React.HTMLAttributes<HTMLDivElement> {
   src: string | File;
   devicePixelRatio?: number;
   onRendered?: () => void;
-  onFileChange: (src: string) => void;
+  onFileChange?: (src: string) => void;
   maxSteps?: number;
 }
 
@@ -385,8 +385,10 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     const voxelSizeText = voxelSize ? `Voxel Size: ${voxelSize.x}x${voxelSize.y}x${voxelSize.z}` : undefined;
     const artworkText = (
       <select value={filenameText} onChange={(e) => {
-        this.props.onFileChange(e.target.value)
-      } }>
+        if (this.props.onFileChange) {
+          this.props.onFileChange(e.target.value)
+        }
+      }}>
         {availableVoxelFiles.map((filename, i) => (
           <option key={i} value={filename}>{filename}</option>
         ))}
@@ -447,3 +449,5 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
 // Rest for at least 50ms. This should prevent the webpage 
 // from solely consuming all the gpu powers.
 export default ReactTimeout<VoxelViewerProps>(ReactAnimationFrame(VoxelViewer));
+
+console.log("VoxelViewer loaded")
