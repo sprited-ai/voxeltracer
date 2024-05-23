@@ -19,7 +19,7 @@ const OrbitControls = require('three-orbit-controls')(THREE);
 
 interface OrbitControls extends THREE.OrbitControls {}
 
-interface VoxelViewerProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface VoxelViewerProps extends React.HTMLAttributes<HTMLDivElement> {
   src: string | File;
   devicePixelRatio?: number;
   onRendered?: () => void;
@@ -28,6 +28,7 @@ interface VoxelViewerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 interface VoxelViewerState {
+  src: string | File;
   tick: number;
   took: number;
   startTime: number;
@@ -54,13 +55,13 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
   private orbitControls?: OrbitControls;
   private loader: Loader;
   private pauseCount: number = 0;
-  private src: string | File;
+  // private src: string | File;
   private containerRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: VoxelViewerProps) {
     super(props);
     this.containerRef = React.createRef<HTMLDivElement>();
-    this.src = props.src;
+    // this.src = props.src;
     this.loader = new Loader();
     this.scene = new VoxelScene();
     // Initial dummy value.
@@ -77,6 +78,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     const lightDir = new Vector3(-1.1, 1.9, 1.7);
     lightDir.normalize();
     this.state = {
+      src: props.src,
       shapeHashes: [],
       packedTexture: dummyPackedTexture,
       materials: this.scene.materials,
@@ -183,7 +185,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     orbitControls.addEventListener('change', this.didOrbit);
 
     // Load model.
-    this.loader.load(this.src).then((scene: VoxelScene) => {
+    this.loader.load(this.state.src).then((scene: VoxelScene) => {
       this.scene = scene;
       this.sceneDidChange();
     });
@@ -192,11 +194,13 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
     // this.loader.loadUrl('vox/3x3x3.vox');
   }
 
-  componentDidUpdate(prevProps: VoxelViewerProps) {
+  componentDidUpdate(prevProps: VoxelViewerProps, prevState: VoxelViewerState) {
     // Reload the scene if the src has changed.
     if (this.props.src !== prevProps.src) {
-      this.src = this.props.src;
-      this.loader.load(this.src).then((scene: VoxelScene) => {
+      this.setState({ src: this.props.src });
+    }
+    if (this.state.src !== prevState.src) {
+      this.loader.load(this.state.src).then((scene: VoxelScene) => {
         this.scene = scene;
         this.sceneDidChange();
       });
@@ -380,7 +384,7 @@ class VoxelViewer extends React.Component<VoxelViewerProps, VoxelViewerState> {
       // "vox/wall-part-1.vox",
     ]
 
-    const filenameText = this.src instanceof File ? this.src.name : this.src;
+    const filenameText = this.state.src instanceof File ? this.state.src.name : this.state.src;
     const voxelSize = this.scene && this.scene.models && this.scene.models.length > 0 ? this.scene.models[0].size : undefined;
     const voxelSizeText = voxelSize ? `Voxel Size: ${voxelSize.x}x${voxelSize.y}x${voxelSize.z}` : undefined;
     const artworkText = (

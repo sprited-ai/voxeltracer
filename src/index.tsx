@@ -1,5 +1,5 @@
 import React from 'react';
-import VoxelViewer from './Components/VoxelViewer/VoxelViewer';
+import VoxelViewer, { VoxelViewerProps } from './Components/VoxelViewer/VoxelViewer';
 import ReactDOM from 'react-dom';
 
 export function initVoxelViewer({
@@ -9,7 +9,21 @@ export function initVoxelViewer({
     src: string;
     container: HTMLElement;
 }) {
-    ReactDOM.render(<VoxelViewer key={src} src={src} />, container);
+    const ref = React.createRef<React.Component<VoxelViewerProps, any, any>>();
+    
+    ReactDOM.render(<VoxelViewer key={src} src={src} ref={ref} />, container);
+
+    function rerender({ src }: { src: string }) {
+        ReactDOM.render(<VoxelViewer key={src} src={src} ref={ref} />, container);
+    }
+
+    const viewer = {
+        container: container,
+        component: ref.current!,
+        rerender
+    };
+
+    return viewer;
 }
 
 
