@@ -35,11 +35,16 @@ type MagicaVoxelHeader = {
   version: number;
 }
 
+/**
+ * Reference 
+ * 
+ * https://github.com/jpaver/opengametools/blob/master/src/ogt_vox.h
+ */
 export default class MagicaVoxelReader extends Reader {
 
   readFile(): MagicaVoxelData {
     const { version } = this.readHeader();
-    if (version !== 150) {
+    if (version > 200) {
       throw 'Version is not supported';
     }
     const mainChunk = this.readMainChunk();
@@ -47,10 +52,13 @@ export default class MagicaVoxelReader extends Reader {
   }
 
   readHeader(): MagicaVoxelHeader {
-    if (this.readStr(4) !== 'VOX ') {
+    const str = this.readStr(4);
+    if (str !== 'VOX ') {
+      console.log(`[MagicaVoxelReader.readHeader] Not a MagicaVoxel file (str="${str}"`);
       throw 'Not a MagicaVoxel file.';
     }
     const version = this.readInt();
+    console.log(`MagicaVoxelReader - readHeader - Version: ${version}`);
     return { version };
   }
 
@@ -81,6 +89,7 @@ export default class MagicaVoxelReader extends Reader {
 
   readChunk(): Chunk {
     const chunkId = this.peekChunkId();
+    console.log(`[MagicaVoxelReader.readChunk] ${chunkId}`);
     switch (chunkId) {
       case 'MAIN':
         return this.readMainChunk();
@@ -105,6 +114,7 @@ export default class MagicaVoxelReader extends Reader {
       case 'LAYR':
         return this.readLayrChunk();
       default:
+        console.log(`[MagicaVoxelReader.readChunk] Unsupported chunkId: ${chunkId}`);
         return this.readUnsupportedChunk();
     }
   }
@@ -152,6 +162,32 @@ export default class MagicaVoxelReader extends Reader {
 
   readMattChunk(): MattChunk {
     this.readChunkHeader();
+
+    let materialId = this.readInt(); // materialId
+    materialId = materialId & 0xFF; // incoming material 256 is material 0
+    
+    const types = ["diffsue", "metal", "glass", "emissive"];
+    
+    const materialType = this.readInt();
+
+    // diffuse  : 1.0
+    // metal    : (0.0 - 1.0] : blend between metal and diffuse material
+    // glass    : (0.0 - 1.0] : blend between glass and diffuse material
+    // emissive : (0.0 - 1.0] : self-illuminated material
+    const materialWeight = this.readFloat();
+    
+    // bit(0) : Plastic
+    // bit(1) : Roughness
+    // bit(2) : Specular
+    // bit(3) : IOR
+    // bit(4) : Attenuation
+    // bit(5) : Power
+    // bit(6) : Glow
+    // bit(7) : isTotalPower (*no value)
+    const propertyBits = this.readUint();
+
+    this.skip(16); // reserved
+
     // TODO: New version uses MATL. We should still support old file formats.
     return new MattChunk();
   }
@@ -161,7 +197,7 @@ export default class MagicaVoxelReader extends Reader {
     const materialId = this.readInt();
     const dict = this.readDict();
     
-    console.log(dict);
+    // console.log(dict);
 
     // Type
     let type;

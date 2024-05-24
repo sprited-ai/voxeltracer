@@ -106,6 +106,7 @@ export default class MagicaVoxelContext extends Context {
   private parseNodeChunks(chunkMap: NodeChunkMap): Obj {
     const rootChunk: Chunk = chunkMap[0];
     if (!(rootChunk instanceof NtrnChunk)) {
+      // TODO: Older files do not have hierarchy.
       throw 'Expected root node chunk to be nTRN chunk.';
     }
     return this.parseNtrnChunk(rootChunk, chunkMap);

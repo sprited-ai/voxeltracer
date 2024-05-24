@@ -46,7 +46,14 @@ export default class Loader {
       const fileReader = new FileReader();
       fileReader.onload = function(e) {
         const buffer = fileReader.result as ArrayBuffer;
-        resolve(self.loadBuffer(buffer));
+        let result: VoxelScene | null = null;
+        try {
+          result = self.loadBuffer(buffer);
+        } catch (e) {
+          alert(e);
+          return;
+        }
+        resolve(result);
       }
       fileReader.readAsArrayBuffer(file);
     });
