@@ -27,7 +27,11 @@ export default class Loader {
     let scene: VoxelScene | null = null;
     for (let i = 0; i < contexts.length; ++i) {
       const context = contexts[i];
-      scene = context.parseScene(buffer);
+      try {
+        scene = context.parseScene(buffer);
+      } catch (e) {
+        alert("Error parsing file: " + e + " Trying next context.");
+      }
       if (scene) {
         break;
       }
