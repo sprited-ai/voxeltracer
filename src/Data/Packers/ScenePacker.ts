@@ -1,5 +1,5 @@
 import VoxelScene from "../Models/VoxelScene";
-import ndarray from "ndarray";
+import ndarray, { NdArray } from "ndarray";
 import VoxelArt from "../Models/VoxelArt";
 import Obj from "../Models/Obj";
 import { Matrix4, Vector3, Matrix3 } from "three";
@@ -66,7 +66,7 @@ function getShapeHashes(obj: Obj, models: VoxelArt[], byteOffsets: number[], par
 }
 
 export default class ScenePacker {
-  pack(scene: VoxelScene): [ShapeHash[], ndarray] {
+  pack(scene: VoxelScene): [ShapeHash[], NdArray] {
     const width = getTextureWidth(scene);
     const byteOffsets: number[] = [];
     const textureData = new Uint8Array(width * width * 4);
