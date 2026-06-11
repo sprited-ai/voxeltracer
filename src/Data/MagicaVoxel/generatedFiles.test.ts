@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import MagicaVoxelContext from './MagicaVoxelContext';
 
 // Regenerate with: node scripts/generate-vox.mjs
-const dir = join(__dirname, '../../../public/vox/generated');
+const dir = join(import.meta.dirname, '../../../public/vox/generated');
 
 function parseFile(name: string) {
   const buf = readFileSync(join(dir, name));

@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@types/ndarray": "^1.0.14",
+    "@types/node": "^25.9.3",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@types/three": "^0.184.0",
