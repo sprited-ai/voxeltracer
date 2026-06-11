@@ -19,14 +19,14 @@
   "files": [
     "dist"
   ],
-  "repository": "git+https://github.com/kndlt/voxeltracer.git",
+  "repository": "git+https://github.com/sprited-ai/voxeltracer.git",
   "keywords": [],
   "author": "kndlt <kndlt22@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kndlt/voxeltracer/issues"
+    "url": "https://github.com/sprited-ai/voxeltracer/issues"
   },
-  "homepage": "https://kndlt.github.io/voxeltracer",
+  "homepage": "https://sprited-ai.github.io/voxeltracer",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
