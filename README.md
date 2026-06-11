@@ -46,11 +46,11 @@ in browsers since 2021).
 ## Development
 
 ```
-yarn          # install
-yarn dev      # demo app at http://localhost:5173
-yarn test     # vitest (parser, packers, texture layout)
-yarn build    # demo app -> build/
-yarn build:lib  # library -> dist/ (ESM + UMD + d.ts)
+npm install
+npm run dev        # demo app at http://localhost:5173
+npm test           # vitest (parser, packers, texture layout)
+npm run build      # demo app -> build/
+npm run build:lib  # library -> dist/ (ESM + UMD + d.ts)
 node scripts/generate-vox.mjs  # regenerate stress-test .vox files
 ```
 
