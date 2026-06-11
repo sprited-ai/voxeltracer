@@ -5,7 +5,11 @@ monte-carlo path tracer on WebGL2 — voxel data lives in an `R8UI` 3D texture
 atlas walked by a DDA kernel, with diffuse/metal/glass/emissive materials and
 soft shadows. Framework-agnostic library plus a React demo app.
 
-Demo: https://kndlt.github.io/voxeltracer
+Demo: https://kndlt.github.io/voxeltracer — press `` ` `` (backtick) for the debug panel.
+
+![Two merged .vox files (mini store + monu9) path-traced side by side](docs/images/demo_store_meets_monu9.png)
+
+![64 instanced mini stores (one model, 64 scene-graph references)](docs/images/demo_village_8x8.png)
 
 ## Usage
 
