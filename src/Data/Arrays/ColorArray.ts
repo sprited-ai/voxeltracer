@@ -1,9 +1,9 @@
-import { Vector4, Vector } from "three";
-import ndarray from 'ndarray';
+import { Vector4 } from "three";
+import ndarray, { NdArray } from 'ndarray';
 import defaultColorPaletteData from "../MagicaVoxel/defaultColorPaletteData";
 
 export default class ColorArray {
-  public colorTexture: ndarray;
+  public colorTexture: NdArray;
   constructor() {
     this.colorTexture = ndarray(defaultColorPaletteData, [16, 16, 4]);
   }

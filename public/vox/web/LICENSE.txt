@@ -1,0 +1,2 @@
+Files in this directory are from https://github.com/mikelovesrobots/mmmm
+(CC0 1.0 Universal / public domain), downloaded 2026-06-11 for renderer testing.

@@ -1,56 +1,33 @@
-import React, { Component } from 'react';
+import { useEffect, useState } from 'react';
 import VoxelViewer from '../VoxelViewer/VoxelViewer';
-import qs from "qs";
 import './App.css';
 
 const defaultUrl = 'vox/pink_mini_store.vox';
 
-interface AppProps {
+function parseHash(): { src?: string } {
+  const params = new URLSearchParams(location.hash.slice(1));
+  return { src: params.get('src') ?? undefined };
 }
 
-interface AppState {
-  src?: string;
-} 
+export default function App() {
+  const [{ src }, setState] = useState(parseHash());
 
-function parseHash() {
-  const parsed = qs.parse(location.hash.substring(1)) as Partial<AppState>;
-  console.log("App State from Hash", parsed);
-  return parsed;
+  useEffect(() => {
+    const onHashChange = () => setState(parseHash());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  return (
+    <div className="App">
+      <VoxelViewer
+        src={src || defaultUrl}
+        onFileChange={(next: string) => {
+          const params = new URLSearchParams(location.hash.slice(1));
+          params.set('src', next);
+          location.hash = params.toString();
+        }}
+      />
+    </div>
+  );
 }
-
-export default class App extends React.Component<AppProps, AppState> {
-
-  constructor(props: AppProps) {
-    super(props);
-    this.state = {
-      ...parseHash()
-    };
-  }
-
-  hashChanged() {
-    this.setState({
-      ...parseHash()
-    });
-  }
-
-  componentDidMount() {
-    window.addEventListener("hashchange", () => this.hashChanged(), false);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener("hashchange", () => this.hashChanged(), false);
-  }
-
-  render() {
-    const src = this.state.src || defaultUrl;
-    return (
-      <div className="App">
-        <VoxelViewer {...(this.state as any)} src={src}
-          onFileChange={(src:string) => {
-            location.hash = qs.stringify({ ...parseHash(), src });
-          }} />
-      </div>
-    );
-  }
-}
-

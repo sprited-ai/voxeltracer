@@ -1,5 +1,5 @@
 import Material from "../Materials/Material";
-import ndarray from "ndarray";
+import ndarray, { NdArray } from "ndarray";
 import DiffuseMaterial from "../Materials/DiffuseMaterial";
 import MetallicMaterial from "../Materials/MetallicMaterial";
 import MaterialType from "../../Enums/MaterialType";
@@ -8,7 +8,7 @@ import EmmissiveMaterial from "../Materials/EmissiveMaterial";
 
 export default class MaterialArray {
   private array: Material[];
-  public materialTexture: ndarray
+  public materialTexture: NdArray
   public constructor() {
     this.array = new Array(256);
     this.materialTexture = ndarray(new Uint8Array(256 * 4), [16, 16, 4]);

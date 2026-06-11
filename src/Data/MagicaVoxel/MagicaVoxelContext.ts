@@ -82,7 +82,7 @@ export default class MagicaVoxelContext extends Context {
       }
       prevChunk = chunk;
     }
-    const rootObj: Obj = this.parseNodeChunks(chunkMap);
+    const rootObj: Obj = this.parseNodeChunks(chunkMap, models.length);
     const colors = this.parseRgbaChunk(rgbaChunk);
     const materials = this.parseMatlChunks(matlChunks);
 
@@ -103,11 +103,16 @@ export default class MagicaVoxelContext extends Context {
     );
   }
 
-  private parseNodeChunks(chunkMap: NodeChunkMap): Obj {
+  private parseNodeChunks(chunkMap: NodeChunkMap, modelCount: number): Obj {
     const rootChunk: Chunk = chunkMap[0];
     if (!(rootChunk instanceof NtrnChunk)) {
-      // TODO: Older files do not have hierarchy.
-      throw 'Expected root node chunk to be nTRN chunk.';
+      // Old files (MagicaVoxel < 0.99) have no node hierarchy; place every
+      // model at the origin.
+      const children: Obj[] = [];
+      for (let i = 0; i < modelCount; i++) {
+        children.push(new Obj('', new Matrix4(), i, false, undefined));
+      }
+      return new Obj('', new Matrix4(), -1, false, children);
     }
     return this.parseNtrnChunk(rootChunk, chunkMap);
   }

@@ -25,12 +25,14 @@ export default class Loader {
     }
 
     let scene: VoxelScene | null = null;
+    let lastError: unknown = null;
     for (let i = 0; i < contexts.length; ++i) {
       const context = contexts[i];
       try {
         scene = context.parseScene(buffer);
       } catch (e) {
-        alert("Error parsing file: " + e + " Trying next context.");
+        lastError = e;
+        console.error('Error parsing file:', e);
       }
       if (scene) {
         break;
@@ -38,7 +40,7 @@ export default class Loader {
     }
 
     if (!scene) {
-      throw "Unable to read the file.";
+      throw lastError ?? "Unable to read the file.";
     }
 
     return scene;
@@ -46,19 +48,17 @@ export default class Loader {
 
   public loadFile(file: File): Promise<VoxelScene> {
     const self = this;
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const fileReader = new FileReader();
-      fileReader.onload = function(e) {
+      fileReader.onload = function() {
         const buffer = fileReader.result as ArrayBuffer;
-        let result: VoxelScene | null = null;
         try {
-          result = self.loadBuffer(buffer);
+          resolve(self.loadBuffer(buffer));
         } catch (e) {
-          alert(e);
-          return;
+          reject(e);
         }
-        resolve(result);
       }
+      fileReader.onerror = () => reject(fileReader.error);
       fileReader.readAsArrayBuffer(file);
     });
   }
