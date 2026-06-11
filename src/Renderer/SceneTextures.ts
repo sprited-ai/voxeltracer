@@ -6,6 +6,7 @@ import VoxelArt from '../Data/Models/VoxelArt';
 import Obj from '../Data/Models/Obj';
 import ShapeHash from '../Data/Types/ShapeHash';
 import { AtlasLayout, packAtlas } from '../Data/Packers/AtlasPacker';
+import { buildShapeBvh, shapeWorldAabb } from '../Data/Packers/ShapeBvh';
 
 /** texels per shape row in the RGBA32F shape texture */
 export const SHAPE_TEX_WIDTH = 8;
@@ -117,6 +118,7 @@ export function build16x16Data(nd: NdArray): Uint8Array {
 export class SceneTextures {
   readonly atlas: THREE.Data3DTexture;
   readonly shapeTex: THREE.DataTexture;
+  readonly bvhTex: THREE.DataTexture;
   readonly colorTex: THREE.DataTexture;
   readonly materialTex: THREE.DataTexture;
   readonly shapeCount: number;
@@ -124,12 +126,14 @@ export class SceneTextures {
   private constructor(
     atlas: THREE.Data3DTexture,
     shapeTex: THREE.DataTexture,
+    bvhTex: THREE.DataTexture,
     colorTex: THREE.DataTexture,
     materialTex: THREE.DataTexture,
     shapeCount: number
   ) {
     this.atlas = atlas;
     this.shapeTex = shapeTex;
+    this.bvhTex = bvhTex;
     this.colorTex = colorTex;
     this.materialTex = materialTex;
     this.shapeCount = shapeCount;
@@ -140,7 +144,12 @@ export class SceneTextures {
       (m): [number, number, number] => [m.size.x, m.size.y, m.size.z]
     );
     const layout = packAtlas(sizes, maxAtlasSize);
-    const hashes = collectShapeHashes(scene, layout);
+    const collected = collectShapeHashes(scene, layout);
+
+    // BVH over world-space shape AABBs; shapes are reordered so leaves
+    // reference contiguous rows of the shape texture.
+    const bvh = buildShapeBvh(collected.map(shapeWorldAabb));
+    const hashes = bvh.order.map((i) => collected[i]);
 
     const [w, h, d] = layout.size;
     const atlas = new THREE.Data3DTexture(buildAtlasData(scene.models, layout), w, h, d);
@@ -162,6 +171,17 @@ export class SceneTextures {
     shapeTex.minFilter = THREE.NearestFilter;
     shapeTex.magFilter = THREE.NearestFilter;
     shapeTex.needsUpdate = true;
+
+    const bvhTex = new THREE.DataTexture(
+      bvh.nodes,
+      2,
+      bvh.nodeCount,
+      THREE.RGBAFormat,
+      THREE.FloatType
+    );
+    bvhTex.minFilter = THREE.NearestFilter;
+    bvhTex.magFilter = THREE.NearestFilter;
+    bvhTex.needsUpdate = true;
 
     const colorTex = new THREE.DataTexture(
       build16x16Data(scene.colors.colorTexture),
@@ -185,12 +205,13 @@ export class SceneTextures {
     materialTex.magFilter = THREE.NearestFilter;
     materialTex.needsUpdate = true;
 
-    return new SceneTextures(atlas, shapeTex, colorTex, materialTex, hashes.length);
+    return new SceneTextures(atlas, shapeTex, bvhTex, colorTex, materialTex, hashes.length);
   }
 
   dispose(): void {
     this.atlas.dispose();
     this.shapeTex.dispose();
+    this.bvhTex.dispose();
     this.colorTex.dispose();
     this.materialTex.dispose();
   }

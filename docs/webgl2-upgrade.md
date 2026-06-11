@@ -380,23 +380,35 @@ immediately.
 ## 9. Appendix: measured shape-count scaling (2026-06-11)
 
 Instancing stress on the WebGL2 renderer (one mini-store model, N `nSHP`
-instances via `scripts/remix-vox.mjs`; ~1450×850 canvas, Apple Silicon,
+instances via `scripts/remix-vox.mjs`; ~1024×800 canvas, Apple Silicon,
 trace ticks per second):
 
-| instances | tps |
-|---|---|
-| 4 (2×2) | 60 (vsync-capped) |
-| 16 (4×4) | 52 |
-| 64 (8×8) | 18 |
-| 256 (16×16) | 8.5 |
-| 16 terrain tiles (256×256×96 each) | 5 |
+| instances | linear loop | + shape BVH | + BVH + sub-stepping |
+|---|---|---|---|
+| 1 store | 60 (vsync) | 60 (vsync) | **382** |
+| 16 (4×4) | 52 | 60 (vsync) | — |
+| 64 (8×8) | 18 | 60 (vsync) | — |
+| 256 (16×16) | 8.5 | 60 (vsync) | **91** |
+| 16 terrain tiles (256×256×96) | 5 | **31** | 31 (GPU-bound) |
 
-Interpretation: per-pixel cost is `O(shapeCount)` — `intersectShapes` AABB-
-tests every shape per ray segment (primary + shadow + bounces). The cliff
-between 16 and 64 shapes is exactly that linear term taking over. Fix is a
-shape-level BVH (or even a coarse uniform grid over shape AABBs); until then,
-~30 shapes is the comfortable budget for interactive scenes. See §7 — this is
-the workload a compute-backend BVH would transform.
+Interpretation: per-pixel cost of the original loop was `O(shapeCount)` —
+`intersectShapes` AABB-tested every shape per ray segment (primary + shadow +
+bounces); the cliff between 16 and 64 shapes was that linear term taking
+over. Two fixes landed on 2026-06-11:
+
+1. **Shape-level BVH** (`src/Data/Packers/ShapeBvh.ts` + stack traversal in
+   the shader): median-split tree over world-space shape AABBs, flattened
+   into an RGBA32F texture, with nearest-hit distance culling. Removed the
+   cliff entirely — 256 instances went 8.5 → 60 tps (vsync-capped).
+2. **Sub-stepping** (multiple trace ticks per display frame): once a tick is
+   cheaper than a frame, the renderer runs K ticks per rAF, adapting K to the
+   rAF delta (swap-chain backpressure is the GPU-saturation signal). Lifted
+   the vsync cap — 1-store converges at ~380 tps (1000 ticks in 2.6s), 256
+   stores at ~91 tps.
+
+The terrain scene is now bound by actual DDA work (long heightmap
+traversals), which is honest GPU load — further gains there are §7/§10
+territory (compute wavefronts or hybrid meshing for primary rays).
 
 ## 10. Appendix: thought experiment — mesh the voxels, then ray trace the mesh?
 

@@ -71,6 +71,7 @@ uniform ivec2 resolution;
 
 uniform usampler3D voxelAtlas;
 uniform sampler2D shapeTex; // SHAPE_TEX_WIDTH x shapeCount RGBA32F
+uniform sampler2D bvhTex; // 2 x nodeCount RGBA32F (see ShapeBvh.ts layout)
 uniform int shapeCount;
 uniform sampler2D colorTexture;
 uniform sampler2D materialTexture;
@@ -249,13 +250,49 @@ Hit intersectGround(Ray ray) {
   return MISS;
 }
 
+/**
+ * Nearest hit across all shapes via BVH traversal (median-split tree is
+ * balanced, so a 32-deep stack covers ~2^31 shapes), then the ground plane.
+ * Nodes farther than the current nearest hit are culled.
+ */
 Hit intersectShapes(Ray ray, int mediumIndex) {
   Hit nearestHit = MISS;
 
-  for (int i = 0; i < shapeCount; ++i) {
-    Hit hit = intersectShape(ray, getShape(i), mediumIndex);
-    if (hit.didHit && (!nearestHit.didHit || hit.t < nearestHit.t)) {
-      nearestHit = hit;
+  if (shapeCount > 0) {
+    vec3 invDir = 1.0 / ray.dir;
+    int stack[32];
+    int sp = 0;
+    stack[sp++] = 0;
+
+    while (sp > 0) {
+      int nodeIndex = stack[--sp];
+      vec4 n0 = texelFetch(bvhTex, ivec2(0, nodeIndex), 0);
+      vec4 n1 = texelFetch(bvhTex, ivec2(1, nodeIndex), 0);
+
+      vec3 tA = (n0.xyz - ray.origin) * invDir;
+      vec3 tB = (n1.xyz - ray.origin) * invDir;
+      vec3 tMin = min(tA, tB);
+      vec3 tMax = max(tA, tB);
+      float tNear = max(max(tMin.x, tMin.y), tMin.z);
+      float tFar = min(min(tMax.x, tMax.y), tMax.z);
+      if (tFar < max(tNear, 0.0)) continue;
+      if (nearestHit.didHit && tNear > nearestHit.t) continue;
+
+      int a = int(n0.w);
+      if (a < 0) {
+        // leaf: shapes [start, start + count)
+        int start = -a - 1;
+        int count = int(n1.w);
+        for (int i = 0; i < count; ++i) {
+          Hit hit = intersectShape(ray, getShape(start + i), mediumIndex);
+          if (hit.didHit && (!nearestHit.didHit || hit.t < nearestHit.t)) {
+            nearestHit = hit;
+          }
+        }
+      } else if (sp < 30) {
+        stack[sp++] = a;
+        stack[sp++] = int(n1.w);
+      }
     }
   }
 

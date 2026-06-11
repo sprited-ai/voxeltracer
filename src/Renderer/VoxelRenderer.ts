@@ -66,6 +66,8 @@ export class VoxelRenderer {
   private hasScene = false;
   private options: VoxelRendererOptions;
   private lastTickAt = 0;
+  private lastFrameAt = 0;
+  private ticksPerFrame = 1;
   /** Trace ticks per second; Infinity = every frame, 0 = paused. */
   ticksPerSecond: number;
 
@@ -101,6 +103,7 @@ export class VoxelRenderer {
         resolution: { value: [1, 1] },
         voxelAtlas: { value: null },
         shapeTex: { value: null },
+        bvhTex: { value: null },
         shapeCount: { value: 0 },
         colorTexture: { value: null },
         materialTexture: { value: null },
@@ -148,6 +151,7 @@ export class VoxelRenderer {
     const u = this.traceMaterial.uniforms;
     u.voxelAtlas.value = textures.atlas;
     u.shapeTex.value = textures.shapeTex;
+    u.bvhTex.value = textures.bvhTex;
     u.shapeCount.value = textures.shapeCount;
     u.colorTexture.value = textures.colorTex;
     u.materialTexture.value = textures.materialTex;
@@ -180,6 +184,8 @@ export class VoxelRenderer {
   resetAccumulation(): void {
     this.tick = 0;
     this.startTime = performance.now();
+    this.ticksPerFrame = 1;
+    this.lastFrameAt = 0;
   }
 
   start(): void {
@@ -188,9 +194,24 @@ export class VoxelRenderer {
     const loop = () => {
       if (!this.running) return;
       const now = performance.now();
-      if (now - this.lastTickAt >= 1000 / this.ticksPerSecond) {
+      if (this.ticksPerSecond === Infinity) {
+        // Unregulated: sub-step. When a single trace tick is cheaper than a
+        // display frame, run several ticks per frame. The rAF delta is the
+        // honest GPU-saturation signal (swap-chain backpressure delays it).
+        if (this.lastFrameAt > 0) {
+          const delta = now - this.lastFrameAt;
+          if (delta < 17.5 && this.ticksPerFrame < 32) {
+            this.ticksPerFrame++;
+          } else if (delta > 25 && this.ticksPerFrame > 1) {
+            this.ticksPerFrame = Math.max(1, this.ticksPerFrame >> 1);
+          }
+        }
+        this.lastFrameAt = now;
+        this.renderFrame(this.ticksPerFrame);
+      } else if (now - this.lastTickAt >= 1000 / this.ticksPerSecond) {
         this.lastTickAt = now;
-        this.renderFrame();
+        this.lastFrameAt = 0;
+        this.renderFrame(1);
       }
       this.rafId = requestAnimationFrame(loop);
     };
@@ -202,31 +223,32 @@ export class VoxelRenderer {
     cancelAnimationFrame(this.rafId);
   }
 
-  private renderFrame(): void {
+  private renderFrame(tickBudget: number): void {
     if (!this.hasScene) return;
     if (this.tick > this.maxTick) return;
 
-    const read = this.targets[this.readIndex];
-    const write = this.targets[1 - this.readIndex];
     const u = this.traceMaterial.uniforms;
-    u.tick.value = this.tick;
-    u.previousFrame.value = read.texture;
+    for (let k = 0; k < tickBudget && this.tick <= this.maxTick; k++) {
+      const read = this.targets[this.readIndex];
+      const write = this.targets[1 - this.readIndex];
+      u.tick.value = this.tick;
+      u.previousFrame.value = read.texture;
+      this.renderer.setRenderTarget(write);
+      this.renderer.render(this.traceScene, this.passCamera);
+      this.readIndex = 1 - this.readIndex;
+      this.tick++;
+    }
 
-    this.renderer.setRenderTarget(write);
-    this.renderer.render(this.traceScene, this.passCamera);
-
-    this.displayMaterial.uniforms.srcTex.value = write.texture;
+    // after the swap, targets[readIndex] holds the latest accumulation
+    this.displayMaterial.uniforms.srcTex.value = this.targets[this.readIndex].texture;
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.displayScene, this.passCamera);
-
-    this.readIndex = 1 - this.readIndex;
-    this.tick++;
 
     const { onTick, onRendered } = this.options;
     if (this.tick > this.maxTick) {
       onTick?.(this.tick - 1, performance.now() - this.startTime);
       onRendered?.();
-    } else if (this.tick % 10 === 0) {
+    } else {
       onTick?.(this.tick, performance.now() - this.startTime);
     }
   }
