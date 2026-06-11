@@ -368,7 +368,11 @@ Ray bounceRay(Ray ray, Hit hit, Material material) {
 // ------------------------------------------------------------------- main
 
 void main() {
-  rngState = pcg(uint(gl_FragCoord.x) * 1973u + uint(gl_FragCoord.y) * 9277u + uint(tick) * 26699u);
+  // Seed per-frame only (no gl_FragCoord): every pixel shares the same
+  // random sequence within a tick, like the original renderer. Convergence
+  // reads as the light direction swinging frame-to-frame instead of
+  // per-pixel grain.
+  rngState = pcg(uint(tick) * 26699u + 1u);
 
   Material groundMaterial = Material(
     MATL_DIFFUSE,
