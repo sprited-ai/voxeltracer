@@ -16,14 +16,14 @@
   "files": [
     "dist"
   ],
-  "repository": "git+https://github.com/kndlt/voxelviewer.git",
+  "repository": "git+https://github.com/kndlt/voxeltracer.git",
   "keywords": [],
   "author": "kndlt <kndlt22@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kndlt/voxelviewer/issues"
+    "url": "https://github.com/kndlt/voxeltracer/issues"
   },
-  "homepage": "https://kndlt.github.io/voxelviewer",
+  "homepage": "https://kndlt.github.io/voxeltracer",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
