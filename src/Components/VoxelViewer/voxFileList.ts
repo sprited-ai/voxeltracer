@@ -1,4 +1,7 @@
 export const availableVoxelFiles = [
+  'vox/generated/sphere_256.vox',
+  'vox/generated/terrain_4x4.vox',
+  'vox/generated/many_models_100.vox',
   'vox/3x3x3.vox',
   'vox/8x8x8.vox',
   'vox/bricks.vox',
