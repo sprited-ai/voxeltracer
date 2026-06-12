@@ -1,4 +1,4 @@
-import{t as e}from"./index-B3bbz6Eg.js";var t=`// WGSL compute path tracer — a line-for-line port of pathTracer.frag
+import{t as e}from"./index-BUjkQBhm.js";var t=`// WGSL compute path tracer — a line-for-line port of pathTracer.frag
 // (GLSL ES 3.00). One invocation per pixel; accumulation ping-pongs between
 // two rgba16float textures. Data lives in storage buffers using the same
 // packed vec4 layouts as the WebGL2 texture encodings, so the fetch helpers
@@ -532,7 +532,13 @@ fn main(@builtin(global_invocation_id) gid: vec3u) {
       break;
     }
 
-    let shadowMultiplier = castShadow(hit.pos, hit.normal, jitteredLightDir);
+    // Tick 0 is the interactive preview (every drag frame restarts at
+    // tick 0): skip the sun shadow ray so it costs a single traversal
+    // per pixel. Shading fidelity returns from tick 1 onward.
+    var shadowMultiplier = 1.0;
+    if (u.tick != 0) {
+      shadowMultiplier = castShadow(hit.pos, hit.normal, jitteredLightDir);
+    }
 
     var material: Material;
     if (hit.materialIndex == GROUND_MATERIAL_INDEX) {
@@ -582,7 +588,7 @@ fn main(@builtin(global_invocation_id) gid: vec3u) {
     accumulatedColor += colorMask * emission;
 
     // Next-event estimation toward emissive voxels
-    if (u.neeEnabled == 1 && material.mtype != MATL_EMISSIVE) {
+    if (u.neeEnabled == 1 && u.tick != 0 && material.mtype != MATL_EMISSIVE) {
       var neeFactor = 1.0;
       if (material.mtype == MATL_GLASS || material.mtype == MATL_METAL) {
         // diffuse transport probability of these materials' bounce
