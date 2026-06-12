@@ -57,6 +57,7 @@ export class VoxelRenderer {
   private displayScene: THREE.Scene;
   private passCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private targets: [THREE.WebGLRenderTarget, THREE.WebGLRenderTarget];
+  private previewTargets: [THREE.WebGLRenderTarget, THREE.WebGLRenderTarget];
   private readIndex = 0;
   private tick = 0;
   private startTime = 0;
@@ -68,8 +69,14 @@ export class VoxelRenderer {
   private lastTickAt = 0;
   private lastFrameAt = 0;
   private ticksPerFrame = 1;
+  private framesSinceRamp = 0;
+  private lastReportedTick = -10;
+  private interactiveUntil = 0;
+  private wasInteractive = false;
   /** Trace ticks per second; Infinity = every frame, 0 = paused. */
   ticksPerSecond: number;
+  /** Resolution scale of the low-res preview used while interacting. */
+  previewScale = 0.4;
 
   constructor(canvas: HTMLCanvasElement, options: VoxelRendererOptions = {}) {
     this.options = options;
@@ -128,6 +135,7 @@ export class VoxelRenderer {
     this.traceScene = fullscreenScene(this.traceMaterial);
     this.displayScene = fullscreenScene(this.displayMaterial);
     this.targets = [makeTarget(1, 1), makeTarget(1, 1)];
+    this.previewTargets = [makeTarget(1, 1), makeTarget(1, 1)];
   }
 
   get maxAtlasSize(): number {
@@ -183,6 +191,9 @@ export class VoxelRenderer {
     (u.eye.value as THREE.Vector3).copy(camera.position);
     (u.viewMatrixInverse.value as THREE.Matrix4).copy(camera.matrixWorld);
     (u.projectionMatrixInverse.value as THREE.Matrix4).copy(camera.projectionMatrixInverse);
+    // Drop to the low-res preview while the camera is moving, and stay
+    // there briefly after the last change before ramping back up.
+    this.interactiveUntil = performance.now() + 300;
     this.resetAccumulation();
   }
 
@@ -192,7 +203,9 @@ export class VoxelRenderer {
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(width, height, false);
     this.targets.forEach((t) => t.setSize(w, h));
-    this.traceMaterial.uniforms.resolution.value = [w, h];
+    const pw = Math.max(1, Math.floor(w * this.previewScale));
+    const ph = Math.max(1, Math.floor(h * this.previewScale));
+    this.previewTargets.forEach((t) => t.setSize(pw, ph));
     this.resetAccumulation();
   }
 
@@ -200,7 +213,9 @@ export class VoxelRenderer {
     this.tick = 0;
     this.startTime = performance.now();
     this.ticksPerFrame = 1;
+    this.framesSinceRamp = 0;
     this.lastFrameAt = 0;
+    this.lastReportedTick = -10;
   }
 
   start(): void {
@@ -209,24 +224,42 @@ export class VoxelRenderer {
     const loop = () => {
       if (!this.running) return;
       const now = performance.now();
-      if (this.ticksPerSecond === Infinity) {
+
+      const interactive = now < this.interactiveUntil;
+      if (interactive !== this.wasInteractive) {
+        // entering or leaving the low-res preview: restart accumulation
+        this.wasInteractive = interactive;
+        this.resetAccumulation();
+      }
+
+      if (interactive) {
+        // low-res preview, single tick — keep the camera responsive
+        this.renderFrame(1, this.previewTargets);
+      } else if (this.ticksPerSecond === Infinity) {
         // Unregulated: sub-step. When a single trace tick is cheaper than a
         // display frame, run several ticks per frame. The rAF delta is the
         // honest GPU-saturation signal (swap-chain backpressure delays it).
+        // Ramp up gently (every 4th frame) so the GPU load builds gradually
+        // after interaction stops; back off immediately when over budget.
         if (this.lastFrameAt > 0) {
           const delta = now - this.lastFrameAt;
           if (delta < 17.5 && this.ticksPerFrame < 32) {
-            this.ticksPerFrame++;
+            this.framesSinceRamp++;
+            if (this.framesSinceRamp >= 4) {
+              this.framesSinceRamp = 0;
+              this.ticksPerFrame++;
+            }
           } else if (delta > 25 && this.ticksPerFrame > 1) {
             this.ticksPerFrame = Math.max(1, this.ticksPerFrame >> 1);
+            this.framesSinceRamp = 0;
           }
         }
         this.lastFrameAt = now;
-        this.renderFrame(this.ticksPerFrame);
+        this.renderFrame(this.ticksPerFrame, this.targets);
       } else if (now - this.lastTickAt >= 1000 / this.ticksPerSecond) {
         this.lastTickAt = now;
         this.lastFrameAt = 0;
-        this.renderFrame(1);
+        this.renderFrame(1, this.targets);
       }
       this.rafId = requestAnimationFrame(loop);
     };
@@ -238,14 +271,21 @@ export class VoxelRenderer {
     cancelAnimationFrame(this.rafId);
   }
 
-  private renderFrame(tickBudget: number): void {
+  private renderFrame(
+    tickBudget: number,
+    targets: [THREE.WebGLRenderTarget, THREE.WebGLRenderTarget]
+  ): void {
     if (!this.hasScene) return;
     if (this.tick > this.maxTick) return;
 
     const u = this.traceMaterial.uniforms;
+    // mutate in place — this runs every frame
+    const resolution = u.resolution.value as number[];
+    resolution[0] = targets[0].width;
+    resolution[1] = targets[0].height;
     for (let k = 0; k < tickBudget && this.tick <= this.maxTick; k++) {
-      const read = this.targets[this.readIndex];
-      const write = this.targets[1 - this.readIndex];
+      const read = targets[this.readIndex];
+      const write = targets[1 - this.readIndex];
       u.tick.value = this.tick;
       u.previousFrame.value = read.texture;
       this.renderer.setRenderTarget(write);
@@ -255,7 +295,7 @@ export class VoxelRenderer {
     }
 
     // after the swap, targets[readIndex] holds the latest accumulation
-    this.displayMaterial.uniforms.srcTex.value = this.targets[this.readIndex].texture;
+    this.displayMaterial.uniforms.srcTex.value = targets[this.readIndex].texture;
     this.renderer.setRenderTarget(null);
     this.renderer.render(this.displayScene, this.passCamera);
 
@@ -263,7 +303,9 @@ export class VoxelRenderer {
     if (this.tick > this.maxTick) {
       onTick?.(this.tick - 1, performance.now() - this.startTime);
       onRendered?.();
-    } else {
+    } else if (this.tick - this.lastReportedTick >= 10) {
+      // throttled: a per-frame callback means per-frame React state churn
+      this.lastReportedTick = this.tick;
       onTick?.(this.tick, performance.now() - this.startTime);
     }
   }
@@ -278,6 +320,7 @@ export class VoxelRenderer {
     this.stop();
     this.sceneTextures?.dispose();
     this.targets.forEach((t) => t.dispose());
+    this.previewTargets.forEach((t) => t.dispose());
     this.traceMaterial.dispose();
     this.displayMaterial.dispose();
     this.renderer.dispose();
