@@ -517,7 +517,10 @@ void main() {
       break;
     }
 
-    float shadowMultiplier = castShadow(hit.pos, hit.normal, jitteredLightDir);
+    // Tick 0 is the interactive preview (every drag frame restarts at
+    // tick 0): skip the sun shadow ray so it costs a single traversal
+    // per pixel. Shading fidelity returns from tick 1 onward.
+    float shadowMultiplier = tick == 0 ? 1.0 : castShadow(hit.pos, hit.normal, jitteredLightDir);
 
     Material material;
     if (hit.materialIndex == GROUND_MATERIAL_INDEX) {
@@ -567,7 +570,7 @@ void main() {
     accumulatedColor += colorMask * emission;
 
     // Next-event estimation toward emissive voxels
-    if (neeEnabled == 1 && material.type != MATL_EMISSIVE) {
+    if (neeEnabled == 1 && tick != 0 && material.type != MATL_EMISSIVE) {
       float neeFactor = 1.0;
       if (material.type == MATL_GLASS || material.type == MATL_METAL) {
         // diffuse transport probability of these materials' bounce
