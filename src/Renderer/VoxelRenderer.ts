@@ -217,7 +217,13 @@ export class VoxelRenderer {
 
   private renderFrame(tickBudget: number): void {
     if (!this.backend || !this.scene) return;
-    if (this.tick > this.maxTickValue) return;
+    if (this.tick > this.maxTickValue) {
+      // Converged: keep presenting the final accumulation. WebGPU canvases
+      // have no preserveDrawingBuffer — without a present per frame the
+      // canvas (and any capture of it) goes blank.
+      this.backend.renderTicks(this.tick, 0);
+      return;
+    }
 
     const count = Math.min(tickBudget, this.maxTickValue - this.tick + 1);
     this.backend.renderTicks(this.tick, count);

@@ -8,6 +8,7 @@ import './VoxelViewer.css';
 export interface VoxelViewerProps {
   src: string | File;
   devicePixelRatio?: number;
+  backend?: 'auto' | 'webgpu' | 'webgl2';
   onRendered?: () => void;
   onFileChange?: (src: string) => void;
   maxSteps?: number;
@@ -22,7 +23,7 @@ const SPEED_OPTIONS: Array<[label: string, tps: number]> = [
 ];
 
 export default function VoxelViewer(props: VoxelViewerProps) {
-  const { src, onFileChange, onRendered, maxSteps, devicePixelRatio } = props;
+  const { src, onFileChange, onRendered, maxSteps, devicePixelRatio, backend } = props;
   const containerRef = useRef<HTMLDivElement>(null);
   const tracerRef = useRef<VoxelTracer | null>(null);
   const onRenderedRef = useRef(onRendered);
@@ -42,6 +43,7 @@ export default function VoxelViewer(props: VoxelViewerProps) {
       tracerRef.current = createVoxelTracer({
         container: containerRef.current!,
         devicePixelRatio,
+        backend,
         maxSteps: maxTick,
         onTick: (tick, ms) => {
           const fps = ms > 0 ? ((tick / ms) * 1000).toFixed(2) : '0';
