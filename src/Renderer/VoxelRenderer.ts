@@ -241,15 +241,19 @@ export class VoxelRenderer {
         // honest GPU-saturation signal (swap-chain backpressure delays it).
         // Ramp up gently (every 4th frame) so the GPU load builds gradually
         // after interaction stops; back off immediately when over budget.
+        // Targets a steady 60fps: grow only when clearly under one vsync
+        // interval, back off as soon as a frame runs past it. Convergence
+        // uses whatever headroom exists below the budget instead of pushing
+        // the page into the 40-55fps "sticky" zone.
         if (this.lastFrameAt > 0) {
           const delta = now - this.lastFrameAt;
-          if (delta < 17.5 && this.ticksPerFrame < 32) {
+          if (delta < 16.2 && this.ticksPerFrame < 32) {
             this.framesSinceRamp++;
             if (this.framesSinceRamp >= 4) {
               this.framesSinceRamp = 0;
               this.ticksPerFrame++;
             }
-          } else if (delta > 25 && this.ticksPerFrame > 1) {
+          } else if (delta > 18.5 && this.ticksPerFrame > 1) {
             this.ticksPerFrame = Math.max(1, this.ticksPerFrame >> 1);
             this.framesSinceRamp = 0;
           }
