@@ -5,10 +5,9 @@ import VoxelScene from '../Data/Models/VoxelScene';
 // under three 0.99, before color management existed. Without this, modern
 // three converts hex colors sRGB->linear and the ground renders far darker.
 THREE.ColorManagement.enabled = false;
-import { SceneTextures } from './SceneTextures';
-import fullscreenVert from './shaders/fullscreen.vert?raw';
-import pathTracerFrag from './shaders/pathTracer.frag?raw';
-import displayFrag from './shaders/display.frag?raw';
+
+import { BackendKind, BackendPreference, TraceBackend } from './TraceBackend';
+import { WebGL2Backend } from './WebGL2Backend';
 
 export const MAX_TICK = 1000;
 
@@ -20,50 +19,40 @@ export interface VoxelRendererOptions {
    * Infinity (default) = one tick per animation frame; 0 = paused.
    */
   ticksPerSecond?: number;
+  /**
+   * GPU backend: 'auto' (default) tries WebGPU and falls back to WebGL2;
+   * 'webgpu' fails hard when unavailable; 'webgl2' forces the fallback.
+   */
+  backend?: BackendPreference;
   /** Called every 10 ticks and on completion. */
   onTick?: (tick: number, msElapsed: number) => void;
   onRendered?: () => void;
 }
 
-function makeTarget(width: number, height: number): THREE.WebGLRenderTarget {
-  return new THREE.WebGLRenderTarget(width, height, {
-    type: THREE.HalfFloatType,
-    format: THREE.RGBAFormat,
-    minFilter: THREE.NearestFilter,
-    magFilter: THREE.NearestFilter,
-    depthBuffer: false,
-    stencilBuffer: false,
-  });
-}
-
-function fullscreenScene(material: THREE.RawShaderMaterial): THREE.Scene {
-  const scene = new THREE.Scene();
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
-  mesh.frustumCulled = false;
-  scene.add(mesh);
-  return scene;
-}
-
 /**
- * Owns the WebGL2 path-tracing loop: two half-float ping-pong accumulation
- * targets, a trace pass and a copy-to-canvas pass, driven by its own rAF
- * loop. React stays out of the per-tick path.
+ * Backend-neutral orchestrator: owns the rAF loop, sub-step controller,
+ * tick accounting, and callbacks. GPU work is delegated to a TraceBackend
+ * (WebGPU with automatic WebGL2 downgrade).
  */
 export class VoxelRenderer {
-  private renderer: THREE.WebGLRenderer;
-  private traceMaterial: THREE.RawShaderMaterial;
-  private displayMaterial: THREE.RawShaderMaterial;
-  private traceScene: THREE.Scene;
-  private displayScene: THREE.Scene;
-  private passCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  private targets: [THREE.WebGLRenderTarget, THREE.WebGLRenderTarget];
-  private readIndex = 0;
+  /** Resolves once a backend is initialized (after fallback, if any). */
+  readonly ready: Promise<void>;
+
+  private backend: TraceBackend | null = null;
+  private backendKindValue: BackendKind | 'pending' = 'pending';
+  private fallbackReasonValue: string | null = null;
+
+  // latest desired state, applied to the backend once ready
+  private scene: VoxelScene | null = null;
+  private camera: THREE.PerspectiveCamera | null = null;
+  private size: { w: number; h: number; pr: number } | null = null;
+  private neeEnabled = true;
+  private maxTickValue: number;
+
   private tick = 0;
   private startTime = 0;
   private rafId = 0;
   private running = false;
-  private sceneTextures: SceneTextures | null = null;
-  private hasScene = false;
   private options: VoxelRendererOptions;
   private lastTickAt = 0;
   private lastFrameAt = 0;
@@ -76,65 +65,49 @@ export class VoxelRenderer {
   constructor(canvas: HTMLCanvasElement, options: VoxelRendererOptions = {}) {
     this.options = options;
     this.ticksPerSecond = options.ticksPerSecond ?? Infinity;
-    this.renderer = new THREE.WebGLRenderer({
-      canvas,
-      // needed for canvas.toBlob() captures
-      preserveDrawingBuffer: true,
-      antialias: false,
-    });
-    // No tone mapping / color-space handling: RawShaderMaterial writes raw
-    // values, matching the legacy gl-react pipeline.
-    this.renderer.toneMapping = THREE.NoToneMapping;
-
-    this.traceMaterial = new THREE.RawShaderMaterial({
-      glslVersion: THREE.GLSL3,
-      vertexShader: fullscreenVert,
-      fragmentShader: pathTracerFrag,
-      depthTest: false,
-      depthWrite: false,
-      uniforms: {
-        eye: { value: new THREE.Vector3() },
-        lightDir: { value: new THREE.Vector3(-1.1, 1.9, 1.7).normalize() },
-        lightColor: { value: new THREE.Color() },
-        skyColor: { value: new THREE.Color() },
-        groundColor: { value: new THREE.Color() },
-        viewMatrixInverse: { value: new THREE.Matrix4() },
-        projectionMatrixInverse: { value: new THREE.Matrix4() },
-        tick: { value: 0 },
-        maxTick: { value: options.maxTick ?? MAX_TICK },
-        resolution: { value: [1, 1] },
-        voxelAtlas: { value: null },
-        shapeTex: { value: null },
-        bvhTex: { value: null },
-        lightTex: { value: null },
-        shapeCount: { value: 0 },
-        lightCount: { value: 0 },
-        neeEnabled: { value: 1 },
-        colorTexture: { value: null },
-        materialTexture: { value: null },
-        previousFrame: { value: null },
-      },
-    });
-
-    this.displayMaterial = new THREE.RawShaderMaterial({
-      glslVersion: THREE.GLSL3,
-      vertexShader: fullscreenVert,
-      fragmentShader: displayFrag,
-      depthTest: false,
-      depthWrite: false,
-      uniforms: {
-        srcTex: { value: null },
-      },
-    });
-
-    this.traceScene = fullscreenScene(this.traceMaterial);
-    this.displayScene = fullscreenScene(this.displayMaterial);
-    this.targets = [makeTarget(1, 1), makeTarget(1, 1)];
+    this.maxTickValue = options.maxTick ?? MAX_TICK;
+    this.ready = this.initBackend(canvas, options.backend ?? 'auto');
   }
 
-  get maxAtlasSize(): number {
-    const gl = this.renderer.getContext() as WebGL2RenderingContext;
-    return gl.getParameter(gl.MAX_3D_TEXTURE_SIZE) as number;
+  private async initBackend(canvas: HTMLCanvasElement, preference: BackendPreference): Promise<void> {
+    if (preference === 'webgpu' || preference === 'auto') {
+      try {
+        const { WebGPUBackend } = await import('./WebGPUBackend');
+        const backend = new WebGPUBackend(canvas);
+        await backend.init();
+        this.backend = backend;
+      } catch (e) {
+        const reason = e instanceof Error ? e.message : String(e);
+        if (preference === 'webgpu') {
+          throw new Error(`WebGPU backend unavailable: ${reason}`);
+        }
+        this.fallbackReasonValue = reason;
+      }
+    }
+    if (!this.backend) {
+      const backend = new WebGL2Backend(canvas);
+      await backend.init();
+      this.backend = backend;
+    }
+    this.backendKindValue = this.backend.kind;
+
+    // apply state that arrived while initializing
+    this.backend.setMaxTick(this.maxTickValue);
+    this.backend.setEmissiveSampling(this.neeEnabled);
+    if (this.size) this.backend.setSize(this.size.w, this.size.h, this.size.pr);
+    if (this.camera) this.backend.setCamera(this.camera);
+    if (this.scene) this.backend.setScene(this.scene);
+    this.resetAccumulation();
+  }
+
+  /** Active backend, or 'pending' while initializing. */
+  get backendKind(): BackendKind | 'pending' {
+    return this.backendKindValue;
+  }
+
+  /** Why WebGPU was downgraded to WebGL2 (null when not applicable). */
+  get fallbackReason(): string | null {
+    return this.fallbackReasonValue;
   }
 
   get currentTick(): number {
@@ -142,58 +115,40 @@ export class VoxelRenderer {
   }
 
   get maxTick(): number {
-    return this.traceMaterial.uniforms.maxTick.value as number;
+    return this.maxTickValue;
   }
 
   set maxTick(value: number) {
-    this.traceMaterial.uniforms.maxTick.value = value;
+    this.maxTickValue = value;
+    this.backend?.setMaxTick(value);
   }
 
   /** Next-event estimation toward emissive voxels (default on). */
   get emissiveSampling(): boolean {
-    return this.traceMaterial.uniforms.neeEnabled.value === 1;
+    return this.neeEnabled;
   }
 
   set emissiveSampling(enabled: boolean) {
-    this.traceMaterial.uniforms.neeEnabled.value = enabled ? 1 : 0;
+    this.neeEnabled = enabled;
+    this.backend?.setEmissiveSampling(enabled);
     this.resetAccumulation();
   }
 
   setScene(scene: VoxelScene): void {
-    this.sceneTextures?.dispose();
-    const textures = SceneTextures.fromScene(scene, this.maxAtlasSize);
-    this.sceneTextures = textures;
-    const u = this.traceMaterial.uniforms;
-    u.voxelAtlas.value = textures.atlas;
-    u.shapeTex.value = textures.shapeTex;
-    u.bvhTex.value = textures.bvhTex;
-    u.lightTex.value = textures.lightTex;
-    u.shapeCount.value = textures.shapeCount;
-    u.lightCount.value = textures.lightCount;
-    u.colorTexture.value = textures.colorTex;
-    u.materialTexture.value = textures.materialTex;
-    (u.lightColor.value as THREE.Color).copy(scene.lightColor);
-    (u.skyColor.value as THREE.Color).copy(scene.skyColor);
-    (u.groundColor.value as THREE.Color).copy(scene.groundColor);
-    this.hasScene = true;
+    this.scene = scene;
+    this.backend?.setScene(scene);
     this.resetAccumulation();
   }
 
   setCamera(camera: THREE.PerspectiveCamera): void {
-    camera.updateMatrixWorld();
-    const u = this.traceMaterial.uniforms;
-    (u.eye.value as THREE.Vector3).copy(camera.position);
-    (u.viewMatrixInverse.value as THREE.Matrix4).copy(camera.matrixWorld);
-    (u.projectionMatrixInverse.value as THREE.Matrix4).copy(camera.projectionMatrixInverse);
+    this.camera = camera;
+    this.backend?.setCamera(camera);
     this.resetAccumulation();
   }
 
   setSize(width: number, height: number, pixelRatio: number): void {
-    const w = Math.max(1, Math.floor(width * pixelRatio));
-    const h = Math.max(1, Math.floor(height * pixelRatio));
-    this.renderer.setPixelRatio(pixelRatio);
-    this.renderer.setSize(width, height, false);
-    this.targets.forEach((t) => t.setSize(w, h));
+    this.size = { w: width, h: height, pr: pixelRatio };
+    this.backend?.setSize(width, height, pixelRatio);
     this.resetAccumulation();
   }
 
@@ -217,12 +172,9 @@ export class VoxelRenderer {
         // Unregulated: sub-step. When a single trace tick is cheaper than a
         // display frame, run several ticks per frame. The rAF delta is the
         // honest GPU-saturation signal (swap-chain backpressure delays it).
-        // Ramp up gently (every 4th frame) so the GPU load builds gradually
-        // after interaction stops; back off immediately when over budget.
-        // Targets a steady 60fps: grow only when clearly under one vsync
-        // interval, back off as soon as a frame runs past it. Convergence
-        // uses whatever headroom exists below the budget instead of pushing
-        // the page into the 40-55fps "sticky" zone.
+        // Targets a steady 60fps: grow gently (every 4th frame) only when
+        // clearly under one vsync interval, back off as soon as a frame
+        // runs past it — convergence uses the headroom below the budget.
         if (this.lastFrameAt > 0) {
           const delta = now - this.lastFrameAt;
           if (delta < 16.2 && this.ticksPerFrame < 32) {
@@ -254,33 +206,15 @@ export class VoxelRenderer {
   }
 
   private renderFrame(tickBudget: number): void {
-    if (!this.hasScene) return;
-    if (this.tick > this.maxTick) return;
+    if (!this.backend || !this.scene) return;
+    if (this.tick > this.maxTickValue) return;
 
-    const targets = this.targets;
-    const u = this.traceMaterial.uniforms;
-    // mutate in place — this runs every frame
-    const resolution = u.resolution.value as number[];
-    resolution[0] = targets[0].width;
-    resolution[1] = targets[0].height;
-    for (let k = 0; k < tickBudget && this.tick <= this.maxTick; k++) {
-      const read = targets[this.readIndex];
-      const write = targets[1 - this.readIndex];
-      u.tick.value = this.tick;
-      u.previousFrame.value = read.texture;
-      this.renderer.setRenderTarget(write);
-      this.renderer.render(this.traceScene, this.passCamera);
-      this.readIndex = 1 - this.readIndex;
-      this.tick++;
-    }
-
-    // after the swap, targets[readIndex] holds the latest accumulation
-    this.displayMaterial.uniforms.srcTex.value = targets[this.readIndex].texture;
-    this.renderer.setRenderTarget(null);
-    this.renderer.render(this.displayScene, this.passCamera);
+    const count = Math.min(tickBudget, this.maxTickValue - this.tick + 1);
+    this.backend.renderTicks(this.tick, count);
+    this.tick += count;
 
     const { onTick, onRendered } = this.options;
-    if (this.tick > this.maxTick) {
+    if (this.tick > this.maxTickValue) {
       onTick?.(this.tick - 1, performance.now() - this.startTime);
       onRendered?.();
     } else if (this.tick - this.lastReportedTick >= 10) {
@@ -291,17 +225,12 @@ export class VoxelRenderer {
   }
 
   async captureBlob(type = 'image/jpeg', quality = 0.95): Promise<Blob | null> {
-    return new Promise((resolve) => {
-      this.renderer.domElement.toBlob((blob) => resolve(blob), type, quality);
-    });
+    await this.ready;
+    return this.backend!.captureBlob(type, quality);
   }
 
   dispose(): void {
     this.stop();
-    this.sceneTextures?.dispose();
-    this.targets.forEach((t) => t.dispose());
-    this.traceMaterial.dispose();
-    this.displayMaterial.dispose();
-    this.renderer.dispose();
+    void this.ready.then(() => this.backend?.dispose()).catch(() => {});
   }
 }

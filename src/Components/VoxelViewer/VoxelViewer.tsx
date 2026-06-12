@@ -117,6 +117,12 @@ export default function VoxelViewer(props: VoxelViewerProps) {
           </select>
           <div>{voxelSizeText}</div>
           <div>{error ?? status}</div>
+          <div>
+            backend: {tracerRef.current?.renderer.backendKind ?? '—'}
+            {tracerRef.current?.renderer.fallbackReason
+              ? ` (↓ ${tracerRef.current.renderer.fallbackReason})`
+              : ''}
+          </div>
           <label>
             <input
               type="checkbox"

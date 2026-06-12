@@ -17,6 +17,8 @@ export interface VoxelTracerOptions {
   autoFrame?: boolean;
   /** Throttle trace ticks; Infinity (default) = every frame, 0 = paused. */
   ticksPerSecond?: number;
+  /** GPU backend: 'auto' (default) = WebGPU with automatic WebGL2 downgrade. */
+  backend?: 'auto' | 'webgpu' | 'webgl2';
   onTick?: (tick: number, msElapsed: number) => void;
   onSceneLoaded?: (scene: VoxelScene) => void;
   onRendered?: () => void;
@@ -53,9 +55,11 @@ export function createVoxelTracer(options: VoxelTracerOptions): VoxelTracer {
   const renderer = new VoxelRenderer(canvas, {
     maxTick: options.maxSteps ?? MAX_TICK,
     ticksPerSecond: options.ticksPerSecond,
+    backend: options.backend,
     onTick: options.onTick,
     onRendered: options.onRendered,
   });
+  renderer.ready.catch(onError);
 
   const camera = new PerspectiveCamera(60, 1, 0.01, 1000);
   camera.position.set(0, 50, 100);
