@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["vite/client", "node"]
+    "types": ["vite/client", "node", "@webgpu/types"]
   },
   "include": ["src", "vite.config.ts", "vite.lib.config.ts"]
 }

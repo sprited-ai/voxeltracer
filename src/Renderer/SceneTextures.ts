@@ -11,6 +11,48 @@ import { buildShapeBvh, shapeWorldAabb } from '../Data/Packers/ShapeBvh';
 /** texels per shape row in the RGBA32F shape texture */
 export const SHAPE_TEX_WIDTH = 8;
 
+/** Backend-neutral GPU-ready scene data (raw arrays + dimensions). */
+export interface SceneData {
+  atlas: Uint8Array;
+  atlasSize: [number, number, number];
+  shapes: Float32Array;
+  shapeCount: number;
+  bvh: Float32Array;
+  bvhNodeCount: number;
+  lights: Float32Array;
+  lightCount: number;
+  /** 16x16 RGBA8 row-major, texel = ivec2(index % 16, index / 16) */
+  palette: Uint8Array;
+  materials: Uint8Array;
+}
+
+export function buildSceneData(scene: VoxelScene, maxAtlasSize: number): SceneData {
+  const sizes = scene.models.map(
+    (m): [number, number, number] => [m.size.x, m.size.y, m.size.z]
+  );
+  const layout = packAtlas(sizes, maxAtlasSize);
+  const collected = collectShapeHashes(scene, layout);
+
+  // BVH over world-space shape AABBs; shapes are reordered so leaves
+  // reference contiguous rows of the shape texture/buffer.
+  const bvh = buildShapeBvh(collected.map(shapeWorldAabb));
+  const hashes = bvh.order.map((i) => collected[i]);
+  const lightList = buildLightListData(scene, hashes);
+
+  return {
+    atlas: buildAtlasData(scene.models, layout),
+    atlasSize: layout.size,
+    shapes: buildShapeTexData(hashes),
+    shapeCount: hashes.length,
+    bvh: bvh.nodes,
+    bvhNodeCount: bvh.nodeCount,
+    lights: lightList.data,
+    lightCount: lightList.count,
+    palette: build16x16Data(scene.colors.colorTexture),
+    materials: build16x16Data(scene.materials.materialTexture),
+  };
+}
+
 function decomposeModelMatrix(modelMatrix: Matrix4): [Matrix3, Vector3] {
   const translation = new Vector3(
     modelMatrix.elements[12],
@@ -230,19 +272,10 @@ export class SceneTextures {
   }
 
   static fromScene(scene: VoxelScene, maxAtlasSize: number): SceneTextures {
-    const sizes = scene.models.map(
-      (m): [number, number, number] => [m.size.x, m.size.y, m.size.z]
-    );
-    const layout = packAtlas(sizes, maxAtlasSize);
-    const collected = collectShapeHashes(scene, layout);
+    const data = buildSceneData(scene, maxAtlasSize);
 
-    // BVH over world-space shape AABBs; shapes are reordered so leaves
-    // reference contiguous rows of the shape texture.
-    const bvh = buildShapeBvh(collected.map(shapeWorldAabb));
-    const hashes = bvh.order.map((i) => collected[i]);
-
-    const [w, h, d] = layout.size;
-    const atlas = new THREE.Data3DTexture(buildAtlasData(scene.models, layout), w, h, d);
+    const [w, h, d] = data.atlasSize;
+    const atlas = new THREE.Data3DTexture(data.atlas, w, h, d);
     atlas.format = THREE.RedIntegerFormat;
     atlas.type = THREE.UnsignedByteType;
     atlas.internalFormat = 'R8UI';
@@ -252,9 +285,9 @@ export class SceneTextures {
     atlas.needsUpdate = true;
 
     const shapeTex = new THREE.DataTexture(
-      buildShapeTexData(hashes),
+      data.shapes,
       SHAPE_TEX_WIDTH,
-      Math.max(hashes.length, 1),
+      Math.max(data.shapeCount, 1),
       THREE.RGBAFormat,
       THREE.FloatType
     );
@@ -263,9 +296,9 @@ export class SceneTextures {
     shapeTex.needsUpdate = true;
 
     const bvhTex = new THREE.DataTexture(
-      bvh.nodes,
+      data.bvh,
       2,
-      bvh.nodeCount,
+      data.bvhNodeCount,
       THREE.RGBAFormat,
       THREE.FloatType
     );
@@ -274,7 +307,7 @@ export class SceneTextures {
     bvhTex.needsUpdate = true;
 
     const colorTex = new THREE.DataTexture(
-      build16x16Data(scene.colors.colorTexture),
+      data.palette,
       16,
       16,
       THREE.RGBAFormat,
@@ -285,7 +318,7 @@ export class SceneTextures {
     colorTex.needsUpdate = true;
 
     const materialTex = new THREE.DataTexture(
-      build16x16Data(scene.materials.materialTexture),
+      data.materials,
       16,
       16,
       THREE.RGBAFormat,
@@ -295,7 +328,7 @@ export class SceneTextures {
     materialTex.magFilter = THREE.NearestFilter;
     materialTex.needsUpdate = true;
 
-    const lightList = buildLightListData(scene, hashes);
+    const lightList = { data: data.lights, count: data.lightCount };
     const lightTex = new THREE.DataTexture(
       lightList.data,
       1,
@@ -314,7 +347,7 @@ export class SceneTextures {
       colorTex,
       materialTex,
       lightTex,
-      hashes.length,
+      data.shapeCount,
       lightList.count
     );
   }

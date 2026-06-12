@@ -48,8 +48,13 @@ tracer.dispose();
 ```
 
 The tracer creates its own canvas inside `container`, wires orbit controls and
-resize handling, and runs its own render loop. WebGL2 is required (universal
-in browsers since 2021).
+resize handling, and runs its own render loop.
+
+**Backends:** the path tracer runs as a WebGPU compute shader when available
+and automatically downgrades to a WebGL2 fragment pipeline otherwise
+(`backend: 'auto' | 'webgpu' | 'webgl2'`). Both backends are verified
+pixel-equivalent by the golden tests; WebGPU is 15–70% faster depending on
+the scene. WebGL2 is the floor (universal in browsers since 2021).
 
 ## Development
 
@@ -59,7 +64,9 @@ npm run dev        # demo app at http://localhost:5173
 npm test           # vitest (parser, packers, texture layout)
 npm run build      # demo app -> build/
 npm run build:lib  # library -> dist/ (ESM + UMD + d.ts)
-node scripts/generate-vox.mjs  # regenerate stress-test .vox files
+node scripts/generate-vox.mjs   # regenerate stress-test .vox files
+node scripts/golden-test.mjs    # pixel-compare both backends vs goldens (needs dev server)
+node scripts/perf-test.mjs      # backend throughput comparison
 ```
 
 Sample files live in `public/vox/` — including generated stress scenes

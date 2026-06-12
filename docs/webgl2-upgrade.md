@@ -251,6 +251,15 @@ proves gl-react's abstraction was being fought, not used).
 
 *Added 2026-06-11, after the WebGL2 migration landed on `jin/webgl2-modernize`.*
 
+> **Status update (2026-06-12): shipped.** The WebGPU backend (WGSL compute
+> kernel, storage buffers, `texture_3d<u32>` atlas, rgba16float ping-pong)
+> landed behind a `TraceBackend` interface with automatic WebGL2 downgrade.
+> Golden tests prove pixel parity (WebGL2 reproduces goldens exactly,
+> WebGPU within float rounding). Measured at 1024×768 dpr=1, 240 ticks,
+> sub-stepping capped at 8: 1 store 208→244 tps, 256 stores 13→16.5 tps,
+> terrain 28→47 tps. Compute-first keeps the Node/Dawn headless and
+> workgroup-BVH/wavefront paths open.
+
 Short version: WebGL2 was the right move for now; WebGPU is a worthwhile
 *second backend* later, paired with a real algorithmic upgrade (BVH /
 wavefront path tracing), not as a port of the current kernel.

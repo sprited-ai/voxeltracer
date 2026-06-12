@@ -173,6 +173,13 @@ Hit intersectShape(Ray ray, Shape shape, int mediumIndex) {
   ray.dir = inverseRotation * ray.dir;
   ray.origin = inverseRotation * (ray.origin - shape.translation);
 
+  // Exactly-zero direction components make the DDA math produce NaN
+  // (1/0 * sign(0) = inf * 0), which poisons the accumulation buffer
+  // forever — seen as permanent black speckles. Nudge them off zero.
+  if (abs(ray.dir.x) < 1e-8) ray.dir.x = 1e-8;
+  if (abs(ray.dir.y) < 1e-8) ray.dir.y = 1e-8;
+  if (abs(ray.dir.z) < 1e-8) ray.dir.z = 1e-8;
+
   vec2 tBox = intersectBoundingBox(ray, boxMin, boxMax);
   float near = tBox.x;
   float far = tBox.y;
@@ -349,7 +356,8 @@ Material getMaterial(int index) {
 // Reference: https://drive.google.com/file/d/0B8g97JkuSSBwUENiWTJXeGtTOHFmSm51UC01YWtCZw/view
 float fresnel(float eta, vec3 incident, vec3 normal) {
   float f0 = ((eta - 1.0) * (eta - 1.0)) / ((eta + 1.0) * (eta + 1.0));
-  float fr = f0 + (1.0 - f0) * pow(1.0 - dot(normal, -incident), 5.0);
+  // clamp: float error can push the dot past 1, and pow(negative) is NaN
+  float fr = f0 + (1.0 - f0) * pow(max(1.0 - dot(normal, -incident), 0.0), 5.0);
   return fr;
 }
 
@@ -393,14 +401,20 @@ Ray bounceRay(Ray ray, Hit hit, Material material) {
     float ior = 1.0 + material.refraction;
     float fresnelReflectance = fresnel(1.0 / ior, ray.dir, hit.normal);
 
-    if (rand() > fresnelReflectance) {
+    vec3 refracted = refract(ray.dir, hit.normal, 1.0 / ior);
+    // refract() returns the zero vector on total internal reflection —
+    // following it yields a near-zero direction and NaN downstream.
+    if (rand() > fresnelReflectance && dot(refracted, refracted) > 1e-8) {
       // Refraction
-      ray.dir = refract(ray.dir, hit.normal, 1.0 / ior) + uniformlyRandomVector() * material.roughness * 0.08;
+      ray.dir = refracted + uniformlyRandomVector() * material.roughness * 0.08;
       ray.origin = hit.pos + ray.dir * EPSILON;
       Hit exitHit = intersectShapes(ray, hit.materialIndex);
       if (exitHit.didHit) {
-        ray.dir = refract(ray.dir, exitHit.normal, ior);
-        ray.origin = exitHit.pos - ray.dir * EPSILON;
+        vec3 exitDir = refract(ray.dir, exitHit.normal, ior);
+        if (dot(exitDir, exitDir) > 1e-8) {
+          ray.dir = exitDir;
+          ray.origin = exitHit.pos - ray.dir * EPSILON;
+        }
       }
     } else {
       // Fresnel reflection
