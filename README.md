@@ -29,11 +29,11 @@ Demo: https://sprited-ai.github.io/voxeltracer — press `` ` `` (backtick) for 
 ### npm (ESM)
 
 ```sh
-npm install @sprited/voxeltracer
+npm install voxeltracer
 ```
 
 ```ts
-import { createVoxelTracer } from '@sprited/voxeltracer';
+import { createVoxelTracer } from 'voxeltracer';
 
 const tracer = createVoxelTracer({
   container: document.getElementById('app')!,
